@@ -19,6 +19,15 @@ export const ORDER_STATUSES = [
 
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
+/** Romanian display labels for each order status, shown in the admin UI. */
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  noua: "Nouă",
+  in_procesare: "În procesare",
+  expediat: "Expediat",
+  livrat: "Livrat",
+  anulata: "Anulată",
+};
+
 export const orderStatusEnum = pgEnum("order_status", ORDER_STATUSES);
 
 export interface OrderItem {

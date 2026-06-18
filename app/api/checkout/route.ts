@@ -23,15 +23,17 @@ const orderSchema = z.object({
         productId: z.string(),
         name: z.string(),
         variant: z.string().optional(),
-        unitPrice: z.number().positive(),
+        unitPrice: z.number().int().positive(),
         quantity: z.number().int().positive(),
       })
     )
     .min(1),
+  // Prices are whole lei and persist into integer columns — reject decimals
+  // loudly instead of letting them truncate silently on insert.
   totals: z.object({
-    subtotal: z.number().nonnegative(),
-    shipping: z.number().nonnegative(),
-    total: z.number().positive(),
+    subtotal: z.number().int().nonnegative(),
+    shipping: z.number().int().nonnegative(),
+    total: z.number().int().positive(),
   }),
 });
 

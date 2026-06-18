@@ -1,14 +1,7 @@
 import Link from "next/link";
 import { listOrders } from "@/lib/db/orders";
+import { ORDER_STATUS_LABELS } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/utils";
-
-const STATUS_LABELS: Record<string, string> = {
-  noua: "Nouă",
-  in_procesare: "În procesare",
-  expediat: "Expediat",
-  livrat: "Livrat",
-  anulata: "Anulată",
-};
 
 export default async function OrdersPage() {
   const orders = await listOrders();
@@ -39,7 +32,7 @@ export default async function OrdersPage() {
                 </td>
                 <td className="py-2 pr-4">{o.customerFirstName} {o.customerLastName}</td>
                 <td className="py-2 pr-4">{formatPrice(o.total)}</td>
-                <td className="py-2 pr-4">{STATUS_LABELS[o.status]}</td>
+                <td className="py-2 pr-4">{ORDER_STATUS_LABELS[o.status]}</td>
                 <td className="py-2 pr-4">
                   {new Date(o.createdAt).toLocaleDateString("ro-RO")}
                 </td>

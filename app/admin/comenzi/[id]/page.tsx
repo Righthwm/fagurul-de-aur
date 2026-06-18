@@ -1,16 +1,8 @@
 import { notFound } from "next/navigation";
 import { getOrder } from "@/lib/db/orders";
-import { ORDER_STATUSES } from "@/lib/db/schema";
+import { ORDER_STATUSES, ORDER_STATUS_LABELS } from "@/lib/db/schema";
 import { formatPrice } from "@/lib/utils";
 import { updateStatus } from "../actions";
-
-const STATUS_LABELS: Record<string, string> = {
-  noua: "Nouă",
-  in_procesare: "În procesare",
-  expediat: "Expediat",
-  livrat: "Livrat",
-  anulata: "Anulată",
-};
 
 export default async function OrderDetailPage({
   params,
@@ -62,7 +54,7 @@ export default async function OrderDetailPage({
             className="bg-bg-surface border border-gold-400/20 rounded-sm px-3 py-2"
           >
             {ORDER_STATUSES.map((s) => (
-              <option key={s} value={s}>{STATUS_LABELS[s]}</option>
+              <option key={s} value={s}>{ORDER_STATUS_LABELS[s]}</option>
             ))}
           </select>
         </label>
