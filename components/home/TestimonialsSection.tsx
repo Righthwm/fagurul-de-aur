@@ -1,0 +1,186 @@
+"use client";
+
+import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
+import { Star, ChevronLeft, ChevronRight } from "lucide-react";
+import { useScrollAnimation } from "@/hooks/useScrollAnimation";
+import type { Testimonial } from "@/types";
+
+const testimonials: Testimonial[] = [
+  {
+    id: "t1",
+    author: "Maria P.",
+    city: "Cluj-Napoca",
+    rating: 5,
+    text: "Cea mai buna miere pe care am mancat-o vreodata. Copiii mei refuza acum orice altceva. Aroma de salcam este delicata si autentica. Comand de doi ani si recomand tuturor prietenilor.",
+  },
+  {
+    id: "t2",
+    author: "Alexandru D.",
+    city: "Bucuresti",
+    rating: 5,
+    text: "Mierea poliflora este fenomenala! Gust intens, complex, care te duce direct in campiile inflorite. Am luat-o initial pentru imunitate si am ramas client permanent. Livrarea a fost rapida si impecabila.",
+  },
+  {
+    id: "t4",
+    author: "Bogdan S.",
+    city: "Brasov",
+    rating: 5,
+    text: "Mierea cu capaceala este o revelatie! Niciodata nu mai mancasem miere direct din fagure. Este forma cea mai pura si mai autentica — poti simti diferenta fata de produsele din supermarket.",
+  },
+  {
+    id: "t5",
+    author: "Elena V.",
+    city: "Iasi",
+    rating: 5,
+    text: "Tinctura de propolis ne-a salvat in sezonul de toamna. Nu am mai racit deloc in ultimele 6 luni. Calitate exceptionala, concentratie reala. Recomand cu toata convingerea.",
+  },
+];
+
+function HexAvatar({ initials }: { initials: string }) {
+  return (
+    <div className="relative w-12 h-12 shrink-0">
+      <svg viewBox="0 0 50 58" className="w-full h-full" aria-hidden="true">
+        <polygon
+          points="25,2 48,15 48,43 25,56 2,43 2,15"
+          fill="#D4A017"
+          stroke="#F5C518"
+          strokeWidth="1"
+        />
+      </svg>
+      <span className="absolute inset-0 flex items-center justify-center font-heading text-[#14100A] text-sm font-semibold">
+        {initials}
+      </span>
+    </div>
+  );
+}
+
+function StarRating({ rating }: { rating: number }) {
+  return (
+    <div className="flex gap-0.5" aria-label={`${rating} din 5 stele`}>
+      {Array.from({ length: 5 }, (_, i) => (
+        <Star
+          key={i}
+          size={13}
+          className={i < rating ? "text-gold-300 fill-current" : "text-text-muted"}
+        />
+      ))}
+    </div>
+  );
+}
+
+export function TestimonialsSection() {
+  const [current, setCurrent] = useState(0);
+  const [direction, setDirection] = useState(1);
+  const { ref, isVisible } = useScrollAnimation<HTMLDivElement>();
+
+  const next = useCallback(() => {
+    setDirection(1);
+    setCurrent((c) => (c + 1) % testimonials.length);
+  }, []);
+
+  const prev = useCallback(() => {
+    setDirection(-1);
+    setCurrent((c) => (c - 1 + testimonials.length) % testimonials.length);
+  }, []);
+
+  useEffect(() => {
+    if (!isVisible) return;
+    const interval = setInterval(next, 4500);
+    return () => clearInterval(interval);
+  }, [isVisible, next]);
+
+  const t = testimonials[current];
+
+  return (
+    <section
+      className="relative py-24 px-4 sm:px-6 lg:px-8 bg-bg-secondary overflow-hidden"
+      aria-label="Testimoniale clienți"
+    >
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{ background: "radial-gradient(ellipse 50% 60% at 50% 50%, rgba(212,160,23,0.06) 0%, transparent 70%)" }}
+        aria-hidden="true"
+      />
+
+      <div className="max-w-3xl mx-auto">
+        <motion.div
+          ref={ref}
+          initial={{ opacity: 0, y: 30 }}
+          animate={isVisible ? { opacity: 1, y: 0 } : {}}
+          transition={{ duration: 0.6 }}
+          className="text-center mb-12"
+        >
+          <span className="gold-line" />
+          <h2 className="section-heading font-heading">Ce Spun Clienții Noștri</h2>
+        </motion.div>
+
+        <div className="relative">
+          <AnimatePresence mode="wait" custom={direction}>
+            <motion.div
+              key={t.id}
+              custom={direction}
+              variants={{
+                enter: (d: number) => ({ opacity: 0, x: d > 0 ? 60 : -60 }),
+                center: { opacity: 1, x: 0 },
+                exit: (d: number) => ({ opacity: 0, x: d > 0 ? -60 : 60 }),
+              }}
+              initial="enter"
+              animate="center"
+              exit="exit"
+              transition={{ duration: 0.4 }}
+              className="card p-8 sm:p-10 text-center"
+            >
+              <StarRating rating={t.rating} />
+              <blockquote className="font-heading text-text-primary text-xl sm:text-2xl font-light mt-6 mb-8 leading-relaxed">
+                {t.text}
+              </blockquote>
+              <div className="flex items-center justify-center gap-3">
+                <HexAvatar initials={t.author.slice(0, 2).toUpperCase()} />
+                <div className="text-left">
+                  <p className="text-text-primary text-sm font-semibold font-body">{t.author}</p>
+                  <p className="text-text-muted text-xs">{t.city}</p>
+                </div>
+              </div>
+            </motion.div>
+          </AnimatePresence>
+
+          {/* Nav buttons */}
+          <button
+            onClick={prev}
+            className="absolute -left-4 sm:-left-8 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center border border-gold-400/20 text-text-muted hover:text-gold-300 hover:border-gold-400/50 transition-all rounded-sm"
+            aria-label="Testimonial anterior"
+          >
+            <ChevronLeft size={18} />
+          </button>
+          <button
+            onClick={next}
+            className="absolute -right-4 sm:-right-8 top-1/2 -translate-y-1/2 w-9 h-9 flex items-center justify-center border border-gold-400/20 text-text-muted hover:text-gold-300 hover:border-gold-400/50 transition-all rounded-sm"
+            aria-label="Testimonial următor"
+          >
+            <ChevronRight size={18} />
+          </button>
+        </div>
+
+        {/* Dots */}
+        <div className="flex justify-center gap-2 mt-6" role="tablist" aria-label="Navighează testimoniale">
+          {testimonials.map((_, i) => (
+            <button
+              key={i}
+              role="tab"
+              aria-selected={i === current}
+              aria-label={`Testimonial ${i + 1}`}
+              onClick={() => {
+                setDirection(i > current ? 1 : -1);
+                setCurrent(i);
+              }}
+              className={`w-1.5 h-1.5 rounded-full transition-all duration-300 ${
+                i === current ? "bg-gold-400 w-5" : "bg-text-muted"
+              }`}
+            />
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
