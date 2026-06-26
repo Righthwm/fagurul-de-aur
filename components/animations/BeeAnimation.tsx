@@ -6,161 +6,235 @@ import { MotionPathPlugin } from "gsap/MotionPathPlugin";
 
 gsap.registerPlugin(MotionPathPlugin);
 
-interface BeeCfg {
-  id: number;
-  scale: number;
-  depth: number; // 0 = far (small, blurry, slow-looking), 1 = near
-  delay: number;
-  duration: number;
-  path: { x: number; y: number }[];
+interface Pt {
+  x: number;
+  y: number;
 }
 
-/** Wandering flight path: hive (left) → flowers (right) with sinusoidal drift + jitter. */
-function makePath(): { x: number; y: number }[] {
-  const startX = 90 + Math.random() * 60;
-  const startY = 230 + (Math.random() - 0.5) * 150;
-  const endX = 750 + Math.random() * 120;
-  const endY = 300 + (Math.random() - 0.5) * 170;
-  const waveCount = 2 + Math.random() * 2.5;
-  const waveAmp = 35 + Math.random() * 45;
-  const segs = 6 + Math.floor(Math.random() * 3);
+// Fixed depths (0 = far/small/blurry, 1 = near) keep the rendered markup
+// identical on server and client; all motion randomness lives in the effect.
+const DEPTHS = [0.2, 0.85, 0.5, 0.95, 0.32, 0.7, 0.14, 0.62, 0.9];
 
-  const pts = [{ x: startX, y: startY }];
-  for (let i = 1; i < segs; i++) {
-    const t = i / segs;
-    pts.push({
-      x: startX + (endX - startX) * t + (Math.random() - 0.5) * 50,
-      y:
-        startY +
-        (endY - startY) * t +
-        Math.sin(t * Math.PI * waveCount) * waveAmp +
-        (Math.random() - 0.5) * 30,
-    });
+// The nearest bees fly on a layer ABOVE the jar (passing in front of it);
+// the rest stay behind it. Membership decides which <svg> layer renders a bee.
+// Threshold 0.65 selects the 4 highest-depth bees (0.7, 0.85, 0.9, 0.95).
+const FRONT_IDS = new Set(DEPTHS.map((d, i) => (d > 0.65 ? i : -1)).filter((i) => i >= 0));
+
+/**
+ * Wandering flight in two arcs: hive entrance → UP toward the jar (apex) →
+ * DOWN onto a flower. Drift (sine + jitter) is added everywhere except the
+ * fixed anchor points so the rise-then-fall shape stays readable.
+ */
+function makePath(s: Pt, apex: Pt, t: Pt, minY: number, maxY: number): Pt[] {
+  const amp = 30 + Math.random() * 45;
+  const waves = 1.1 + Math.random() * 1.6;
+  const drift = (bx: number, by: number, tt: number, k: number): Pt => {
+    const x = bx + k * (Math.random() - 0.5) * 70;
+    let y = by + k * (Math.sin(tt * Math.PI * waves) * amp + (Math.random() - 0.5) * 40);
+    y = Math.max(minY, Math.min(maxY, y));
+    return { x, y };
+  };
+
+  const up = 3 + Math.floor(Math.random() * 2); // segments rising to the apex
+  const down = 4 + Math.floor(Math.random() * 3); // segments descending to flower
+  const pts: Pt[] = [{ x: s.x, y: s.y }];
+  for (let i = 1; i <= up; i++) {
+    const tt = i / up;
+    pts.push(drift(s.x + (apex.x - s.x) * tt, s.y + (apex.y - s.y) * tt, tt, i === up ? 0 : 1));
   }
-  pts.push({ x: endX, y: endY });
+  for (let i = 1; i <= down; i++) {
+    const tt = i / down;
+    pts.push(drift(apex.x + (t.x - apex.x) * tt, apex.y + (t.y - apex.y) * tt, tt, i === down ? 0 : 1));
+  }
   return pts;
 }
 
-function makeBees(count: number): BeeCfg[] {
-  return Array.from({ length: count }, (_, i) => {
-    const depth = Math.random();
-    return {
-      id: i,
-      depth,
-      scale: 0.45 + depth * 0.65,
-      delay: i * 0.9 + Math.random() * 0.8,
-      duration: 14 - depth * 4 + Math.random() * 4, // far bees cross slower (parallax)
-      path: makePath(),
-    };
-  });
-}
-
-function BeeSprite({ id, depth }: { id: number; depth: number }) {
-  const blur = depth < 0.4 ? 0.7 : 0;
+/** Honeybee sprite, facing +x so MotionPath autoRotate points the head forward. */
+function BeeSprite({ id, depth, interactive }: { id: number; depth: number; interactive: boolean }) {
+  const blur = depth < 0.4 ? 0.6 : 0;
   return (
     <g
       id={`bee-outer-${id}`}
       style={{
-        cursor: "pointer",
-        pointerEvents: "auto",
+        cursor: interactive ? "pointer" : "default",
+        pointerEvents: interactive ? "auto" : "none",
         filter: blur ? `blur(${blur}px)` : undefined,
       }}
     >
-      {/* Sprite faces RIGHT (+x) so autoRotate points the head along the flight direction */}
       <g id={`bee-inner-${id}`}>
-        {/* Wings — fast flap + blur reads as motion */}
-        <g id={`bee-wings-${id}`} style={{ transformOrigin: "0px -2px" }}>
-          <ellipse cx="3" cy="-8" rx="4" ry="7.5" fill="url(#wingGrad)" transform="rotate(32 3 -8)" />
-          <ellipse cx="-4" cy="-8" rx="3.4" ry="6.5" fill="url(#wingGrad)" opacity="0.7" transform="rotate(-24 -4 -8)" />
+        {/* WINGS — drawn behind the body, sweep up-and-back, faintly veined */}
+        <g id={`bee-wings-${id}`} style={{ transformOrigin: "1px -3px" }}>
+          <path className="bee-wing" d="M1 -3 C -7 -10 -13 -10 -15 -7 C -12 -2 -4 -1 1 -3 Z" fill="url(#wingGrad)" opacity="0.5" />
+          <path className="bee-wing" d="M2 -3 C -4 -14 -12 -15 -14 -11 C -9 -4 -2 -3 2 -3 Z" fill="url(#wingGrad)" opacity="0.62" />
+          <path className="bee-vein" d="M1 -3 C -4 -11 -10 -12 -13 -10" stroke="#FFFFFF" strokeOpacity="0.3" strokeWidth="0.4" fill="none" />
+          <path className="bee-vein" d="M0 -2.4 C -5 -7 -10 -8 -13 -7" stroke="#FFFFFF" strokeOpacity="0.22" strokeWidth="0.35" fill="none" />
+          <path className="bee-vein" d="M-6 -10.5 C -7 -7 -8 -5 -7 -3" stroke="#FFFFFF" strokeOpacity="0.18" strokeWidth="0.3" fill="none" />
         </g>
-        {/* Abdomen — striped, rounded (rear, left side) */}
-        <ellipse cx="-4.5" cy="2" rx="7" ry="4.6" fill="url(#beeBody)" />
-        <path d="M-2.2 -2.4 Q-3.4 2 -2.2 6.3" stroke="#2A1C08" strokeWidth="2" fill="none" opacity="0.75" />
-        <path d="M-6.2 -2 Q-7.4 2 -6.2 5.9" stroke="#2A1C08" strokeWidth="1.8" fill="none" opacity="0.7" />
-        <path d="M-9.6 -0.8 Q-10.3 2 -9.6 4.6" stroke="#2A1C08" strokeWidth="1.5" fill="none" opacity="0.6" />
-        {/* Thorax — fuzzy */}
-        <circle cx="3.5" cy="1" r="4" fill="#8A6516" />
-        <circle cx="3.5" cy="0" r="3.6" fill="#C89530" />
-        {/* Head (front, right side) */}
-        <circle cx="8.5" cy="1.5" r="2.8" fill="#3A2A10" />
-        <circle cx="9.3" cy="0.6" r="0.8" fill="#0D0A06" />
-        {/* Antennae sweep forward */}
-        <path d="M10 -0.5 Q12.5 -3.5 12 -6" stroke="#3A2A10" strokeWidth="0.8" fill="none" strokeLinecap="round" />
-        <path d="M9 -1.2 Q10.5 -4.5 9.5 -7" stroke="#3A2A10" strokeWidth="0.8" fill="none" strokeLinecap="round" />
-        {/* Legs trail backwards in flight */}
-        <path d="M4 4.5 L2.5 7.5 M1 5 L0.5 8 M-2.5 5 L-4 7.8" stroke="#2A1C08" strokeWidth="0.7" strokeLinecap="round" opacity="0.8" />
-        {/* Body highlight */}
-        <ellipse cx="-3" cy="-0.5" rx="4" ry="1.6" fill="#FFE9A0" opacity="0.35" />
-        {/* Stinger at the rear */}
-        <path d="M-11 2 L-13.5 2.4 L-11.2 3.2 Z" fill="#2A1C08" />
+
+        {/* Far legs (behind body) */}
+        <path d="M0 4 L-2 8 M-4 4 L-6 8" stroke="#241808" strokeWidth="0.7" strokeLinecap="round" opacity="0.45" />
+
+        {/* ABDOMEN — pointed at the rear (left), amber with dark bands */}
+        <path
+          d="M3 1 Q3.4 5.2 -2 5.6 L-12.5 3 Q-15.5 1.2 -12.5 -1 L-2 -3.6 Q3.4 -3.2 3 1 Z"
+          fill="url(#beeAbd)"
+        />
+        <path d="M-1 -3.4 Q-2.2 1 -1 5.4" stroke="#241405" strokeWidth="2.1" fill="none" />
+        <path d="M-5 -3.1 Q-6 1 -5 4.9" stroke="#241405" strokeWidth="2" fill="none" />
+        <path d="M-9 -2.2 Q-9.8 1 -9 4" stroke="#241405" strokeWidth="1.7" fill="none" />
+        {/* Dark pointed tip */}
+        <path d="M-12.5 3 Q-15.6 1.1 -12.5 -1 Q-13.8 1 -12.5 3 Z" fill="#1C1404" />
+        {/* Sheen */}
+        <ellipse cx="-4.5" cy="-1.4" rx="6" ry="1.4" fill="#FFE9A0" opacity="0.3" />
+
+        {/* THORAX — fuzzy amber */}
+        <circle cx="2.5" cy="0.5" r="4.6" fill="#6E4E12" />
+        <circle cx="2.5" cy="0" r="4.2" fill="url(#beeThorax)" />
+        <g stroke="#CAA23A" strokeWidth="0.5" opacity="0.7" strokeLinecap="round">
+          <path d="M-1.5 -3 l-1 -1" />
+          <path d="M2 -4.2 l0 -1.3" />
+          <path d="M5.5 -3 l1 -1" />
+          <path d="M6.6 1 l1.3 0.3" />
+          <path d="M-2 3.6 l-1 0.8" />
+        </g>
+
+        {/* HEAD + compound eye */}
+        <circle cx="8.2" cy="1" r="3.1" fill="#2A1C0A" />
+        <ellipse cx="8.9" cy="0.4" rx="1.5" ry="2" fill="#0D0A06" />
+        <circle cx="8.4" cy="-0.3" r="0.5" fill="#5A4A2A" opacity="0.8" />
+        {/* Proboscis */}
+        <path d="M9 3 l0.4 2" stroke="#1C1404" strokeWidth="0.6" strokeLinecap="round" />
+        {/* Antennae */}
+        <path d="M10 -1 Q13 -4 12.5 -6.5" stroke="#1C1404" strokeWidth="0.7" fill="none" strokeLinecap="round" />
+        <path d="M9.5 -1.6 Q11.5 -5 10.8 -7.2" stroke="#1C1404" strokeWidth="0.7" fill="none" strokeLinecap="round" />
+
+        {/* Near legs */}
+        <path
+          d="M4 4 L3 8 M1.5 4.6 L0.8 8.4 M-1.5 4.6 L-2.5 8"
+          stroke="#241808"
+          strokeWidth="0.8"
+          strokeLinecap="round"
+          opacity="0.85"
+        />
       </g>
     </g>
   );
 }
 
 export function BeeAnimation() {
-  const svgRef = useRef<SVGSVGElement>(null);
-  // Generated on the client only: makeBees() uses Math.random(), which would
-  // produce a server/client hydration mismatch if run during render.
-  const [bees, setBees] = useState<BeeCfg[]>([]);
+  const backRef = useRef<SVGSVGElement>(null);
+  const frontRef = useRef<SVGSVGElement>(null);
+  const [resizeKey, setResizeKey] = useState(0);
 
+  // Rebuild flight paths when the layout changes (breakpoint / window resize),
+  // so spawn/target stay glued to the hive and flowers.
   useEffect(() => {
-    setBees(makeBees(9));
+    let t: ReturnType<typeof setTimeout>;
+    const onResize = () => {
+      clearTimeout(t);
+      t = setTimeout(() => setResizeKey((k) => k + 1), 250);
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      clearTimeout(t);
+      window.removeEventListener("resize", onResize);
+    };
   }, []);
 
   useEffect(() => {
-    const svg = svgRef.current;
-    if (!svg || bees.length === 0) return;
-    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const back = backRef.current;
+    const front = frontRef.current;
+    if (!back || !front) return;
+
+    const hide = () =>
+      gsap.set(
+        [...back.querySelectorAll('[id^="bee-outer-"]'), ...front.querySelectorAll('[id^="bee-outer-"]')],
+        { opacity: 0 }
+      );
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      hide();
+      return;
+    }
+
+    // Map a viewport (client) point into the SVG user coordinate space. Both
+    // layers share the same viewBox/size/position, so one matrix serves both.
+    const ctm = back.getScreenCTM();
+    const hive = document.getElementById("hero-hive");
+    const flowers = document.getElementById("hero-flowers");
+    if (!ctm || !hive || !flowers) {
+      hide();
+      return;
+    }
+    const inv = ctm.inverse();
+    const toVB = (cx: number, cy: number): Pt => {
+      const p = new DOMPoint(cx, cy).matrixTransform(inv);
+      return { x: p.x, y: p.y };
+    };
+
+    const vb = back.viewBox.baseVal;
+    const hr = hive.getBoundingClientRect();
+    const fr = flowers.getBoundingClientRect();
+    const jar = document.getElementById("hero-jar");
+    const jrect = jar?.getBoundingClientRect() ?? null;
 
     const ctx = gsap.context(() => {
-      bees.forEach((bee) => {
-        const outer = svg.querySelector<SVGGElement>(`#bee-outer-${bee.id}`);
-        const inner = svg.querySelector<SVGGElement>(`#bee-inner-${bee.id}`);
-        const wings = svg.querySelector<SVGGElement>(`#bee-wings-${bee.id}`);
+      DEPTHS.forEach((depth, id) => {
+        const root = FRONT_IDS.has(id) ? front : back;
+        const outer = root.querySelector<SVGGElement>(`#bee-outer-${id}`);
+        const inner = root.querySelector<SVGGElement>(`#bee-inner-${id}`);
+        const wings = root.querySelector<SVGGElement>(`#bee-wings-${id}`);
         if (!outer || !inner || !wings) return;
 
-        gsap.set(outer, {
-          x: bee.path[0].x,
-          y: bee.path[0].y,
-          scale: bee.scale,
-          opacity: 0,
-        });
+        const scale = 0.5 + depth * 0.7;
+        // Staggered emission so they stream out of the hive one after another
+        const delay = id * 0.7 + Math.random() * 0.6;
+        const duration = 13 - depth * 4 + Math.random() * 4; // far bees slower (parallax)
 
-        // Flight in two legs with a mid-route hover, like stopping at a flower.
-        const pauseAt = 0.4 + Math.random() * 0.25;
-        const hoverTime = 0.8 + Math.random() * 1.4;
-        const leg1 = bee.duration * pauseAt;
-        const leg2 = bee.duration * (1 - pauseAt);
+        // Spawn at the hive's landing board (lower-centre of the hive photo)…
+        const start = toVB(
+          hr.left + hr.width * (0.4 + Math.random() * 0.2),
+          hr.top + hr.height * (0.74 + Math.random() * 0.12)
+        );
+        // …rising first toward the jar (apex, high in the centre)…
+        const apex = jrect
+          ? toVB(
+              jrect.left + jrect.width * (0.1 + Math.random() * 0.8),
+              jrect.top + jrect.height * (Math.random() * 0.45)
+            )
+          : toVB(window.innerWidth * 0.5 + (Math.random() - 0.5) * 220, window.innerHeight * 0.28);
+        // …then descending onto a random bloom within the flower cluster.
+        const target = toVB(
+          fr.left + fr.width * (0.2 + Math.random() * 0.55),
+          fr.top + fr.height * (0.12 + Math.random() * 0.45)
+        );
+        const path = makePath(start, apex, target, vb.y + 30, vb.y + vb.height - 30);
+
+        gsap.set(outer, { x: start.x, y: start.y, scale, opacity: 0 });
+        const vis = 0.4 + depth * 0.6;
 
         const tl = gsap.timeline({
           repeat: -1,
-          delay: bee.delay,
-          repeatDelay: 1 + Math.random() * 2.5,
+          delay,
+          repeatDelay: 1.5 + Math.random() * 3,
         });
-        tl.to(outer, { opacity: 0.35 + bee.depth * 0.65, duration: 0.7, ease: "power1.out" }, 0)
+        tl.to(outer, { opacity: vis, duration: 0.6, ease: "power1.out" }, 0)
           .to(
             outer,
             {
-              motionPath: { path: bee.path, curviness: 1.5, autoRotate: true, end: pauseAt },
-              duration: leg1,
+              motionPath: { path, curviness: 1.45, autoRotate: true },
+              duration,
               ease: "power1.inOut",
             },
             0
           )
-          // level out and hover in place — wings keep beating, body keeps bobbing
-          .to(outer, { rotation: 0, duration: 0.5, ease: "power2.out" })
-          .to(outer, { y: "-=4", duration: hoverTime / 2, yoyo: true, repeat: 1, ease: "sine.inOut" })
-          .to(outer, {
-            motionPath: { path: bee.path, curviness: 1.5, autoRotate: true, start: pauseAt, end: 1 },
-            duration: leg2,
-            ease: "power1.inOut",
-          })
-          .to(outer, { opacity: 0, duration: 0.8 }, "-=0.8")
-          .set(outer, { x: bee.path[0].x, y: bee.path[0].y, rotation: 0 });
+          // Settle onto the flower: level out and hover a moment
+          .to(outer, { rotation: 0, duration: 0.4, ease: "power2.out" })
+          .to(outer, { y: "-=5", duration: 0.5, yoyo: true, repeat: 3, ease: "sine.inOut" })
+          .to(outer, { opacity: 0, duration: 0.7 })
+          .set(outer, { x: start.x, y: start.y, rotation: 0 });
 
-        // Hover jitter — constant small vertical buzz, desynced per bee
-        const bob = gsap.to(inner, {
+        // Constant small vertical buzz
+        gsap.to(inner, {
           y: 2.5 + Math.random() * 2,
           duration: 0.22 + Math.random() * 0.14,
           yoyo: true,
@@ -169,7 +243,8 @@ export function BeeAnimation() {
           delay: Math.random(),
         });
 
-        // Slow body sway — slight rocking around the flight axis
+        // Slow body rock around the flight axis
+        gsap.set(inner, { rotation: -(5 + Math.random() * 4) / 2 });
         gsap.to(inner, {
           rotation: 5 + Math.random() * 4,
           duration: 0.5 + Math.random() * 0.4,
@@ -179,9 +254,8 @@ export function BeeAnimation() {
           transformOrigin: "center",
           delay: Math.random() * 0.5,
         });
-        gsap.set(inner, { rotation: -(5 + Math.random() * 4) / 2 });
 
-        // Wing flap — very fast, slight scale + opacity flicker reads as blur
+        // Wing flap — very fast, scale + opacity flicker reads as motion blur
         const flap = gsap.to(wings, {
           scaleY: 0.3,
           opacity: 0.55,
@@ -191,48 +265,64 @@ export function BeeAnimation() {
           ease: "none",
         });
 
-        // Hover: bee hovers in place, wings beat faster
-        outer.addEventListener("mouseenter", () => {
-          tl.pause();
-          flap.timeScale(2);
-        });
-        outer.addEventListener("mouseleave", () => {
-          tl.play();
-          flap.timeScale(1);
-        });
-
-        void bob;
+        // Hover-to-pause only for the back (interactive) bees; the front layer
+        // is pointer-events-none so it never blocks the hero buttons.
+        if (!FRONT_IDS.has(id)) {
+          outer.addEventListener("mouseenter", () => {
+            tl.pause();
+            flap.timeScale(2);
+          });
+          outer.addEventListener("mouseleave", () => {
+            tl.play();
+            flap.timeScale(1);
+          });
+        }
       });
-    }, svg);
+    });
 
     return () => ctx.revert();
-  }, [bees]);
+  }, [resizeKey]);
+
+  const svgProps = {
+    viewBox: "0 0 900 560",
+    xmlns: "http://www.w3.org/2000/svg",
+    "aria-hidden": true,
+    style: { pointerEvents: "none" as const },
+    preserveAspectRatio: "xMidYMid slice",
+  };
 
   return (
-    <svg
-      ref={svgRef}
-      viewBox="0 0 900 560"
-      className="absolute inset-0 w-full h-full"
-      xmlns="http://www.w3.org/2000/svg"
-      aria-hidden="true"
-      style={{ pointerEvents: "none" }}
-      preserveAspectRatio="xMidYMid slice"
-    >
-      <defs>
-        <linearGradient id="beeBody" x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor="#E8B83A" />
-          <stop offset="55%" stopColor="#C89020" />
-          <stop offset="100%" stopColor="#8A6010" />
-        </linearGradient>
-        <radialGradient id="wingGrad" cx="50%" cy="40%" r="70%">
-          <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.55" />
-          <stop offset="70%" stopColor="#E8E0D0" stopOpacity="0.3" />
-          <stop offset="100%" stopColor="#C8C0B0" stopOpacity="0.1" />
-        </radialGradient>
-      </defs>
-      {bees.map((bee) => (
-        <BeeSprite key={bee.id} id={bee.id} depth={bee.depth} />
-      ))}
-    </svg>
+    <>
+      {/* Back layer — behind the honey jar (jar is z-10) */}
+      <svg ref={backRef} {...svgProps} className="absolute inset-0 w-full h-full z-[5]">
+        <defs>
+          <linearGradient id="beeAbd" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor="#F2C24A" />
+            <stop offset="55%" stopColor="#D89A28" />
+            <stop offset="100%" stopColor="#A06A12" />
+          </linearGradient>
+          <radialGradient id="beeThorax" cx="45%" cy="38%" r="65%">
+            <stop offset="0%" stopColor="#E8B53C" />
+            <stop offset="70%" stopColor="#B0801C" />
+            <stop offset="100%" stopColor="#7A5410" />
+          </radialGradient>
+          <radialGradient id="wingGrad" cx="60%" cy="35%" r="75%">
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.6" />
+            <stop offset="65%" stopColor="#EAE2D2" stopOpacity="0.32" />
+            <stop offset="100%" stopColor="#C8C0B0" stopOpacity="0.1" />
+          </radialGradient>
+        </defs>
+        {DEPTHS.map((depth, id) =>
+          FRONT_IDS.has(id) ? null : <BeeSprite key={id} id={id} depth={depth} interactive />
+        )}
+      </svg>
+
+      {/* Front layer — above the jar; these bees pass in front of it */}
+      <svg ref={frontRef} {...svgProps} className="absolute inset-0 w-full h-full z-20">
+        {DEPTHS.map((depth, id) =>
+          FRONT_IDS.has(id) ? <BeeSprite key={id} id={id} depth={depth} interactive={false} /> : null
+        )}
+      </svg>
+    </>
   );
 }
