@@ -18,6 +18,8 @@ export interface Product {
   priceUnit: string;
   variants: ProductVariant[];
   color: string;
+  /** Icon shape used for the product illustration. Defaults to the honey jar. */
+  visual?: "jar" | "bottle";
   badge?: string;
   badgeColor?: "gold" | "green" | "amber";
   /** Optional promo badge shown in the opposite corner (e.g. a bundle offer). */

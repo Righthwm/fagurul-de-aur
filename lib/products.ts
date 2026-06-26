@@ -205,6 +205,7 @@ export const products: Product[] = [
       { weight: "20ml", price: 15, weightKg: 0.2 },
     ],
     color: "#6B3A1F",
+    visual: "bottle",
     badge: "Imunitate",
     badgeColor: "green",
     inStock: true,
