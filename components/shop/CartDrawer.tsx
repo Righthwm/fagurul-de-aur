@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import { X, Plus, Minus, Trash2, ShoppingBasket } from "lucide-react";
-import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCartStore, shippingFor, FREE_SHIPPING_THRESHOLD } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
 
@@ -15,6 +15,14 @@ export function CartDrawer() {
   const total = subtotal + shipping;
   const count = totalItems();
   const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - subtotal;
+  const router = useRouter();
+
+  // Navigate programmatically: the drawer unmounts on closeCart(), which would
+  // otherwise abort a plain <Link> click before the route change commits.
+  const navigate = (href: string) => {
+    router.push(href);
+    closeCart();
+  };
 
   return (
     <AnimatePresence>
@@ -63,7 +71,7 @@ export function CartDrawer() {
                 <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
                   <ShoppingBasket size={48} className="text-text-muted opacity-30" />
                   <p className="text-text-muted text-sm">Coșul tău este gol</p>
-                  <button onClick={closeCart} className="btn-secondary text-xs px-6 py-2">
+                  <button onClick={() => navigate("/magazin")} className="btn-secondary text-xs px-6 py-2">
                     Descoperă Produsele
                   </button>
                 </div>
@@ -175,13 +183,12 @@ export function CartDrawer() {
                   <span className="text-text-secondary font-body text-sm">Total</span>
                   <span className="font-heading text-xl text-gold-300">{formatPrice(total)}</span>
                 </div>
-                <Link
-                  href="/checkout"
-                  onClick={closeCart}
+                <button
+                  onClick={() => navigate("/checkout")}
                   className="btn-primary w-full text-center block"
                 >
                   Finalizează Comanda
-                </Link>
+                </button>
                 <button
                   onClick={closeCart}
                   className="w-full text-center text-text-muted text-xs hover:text-text-secondary transition-colors"

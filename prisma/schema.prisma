@@ -1,19 +1,19 @@
-// Prisma schema — SQLite for local development (zero-config).
+// Prisma schema — PostgreSQL (Neon) for both local dev and production.
 //
-// PRODUCTION (e.g. Vercel) migration path: SQLite's file DB is ephemeral on
-// serverless hosts. Switch to Postgres/Neon by changing the datasource below to
-//   provider = "postgresql"
-//   url      = env("DATABASE_URL")   // a Neon connection string
-// then run `npx prisma migrate deploy`. Note: with Postgres you can replace the
-// String `role`/`status` fields with real Prisma enums.
+// DATABASE_URL          = pooled connection (used at runtime / serverless).
+// DATABASE_URL_UNPOOLED = direct connection (used for migrations).
+// Neon's Vercel integration sets both automatically. For local dev, copy the
+// same connection strings into .env / .env.local.
+// `role` and `status` are stored as plain strings (could become Prisma enums).
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL_UNPOOLED")
 }
 
 model User {

@@ -6,6 +6,8 @@ import type { NextAuthConfig } from "next-auth";
  * this shared config is what `middleware.ts` uses for session/JWT handling.
  */
 export const authConfig = {
+  // Trust the deployment host (custom domain on Vercel) for callback URLs.
+  trustHost: true,
   pages: { signIn: "/login" },
   session: { strategy: "jwt" },
   providers: [],
