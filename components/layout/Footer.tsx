@@ -144,7 +144,7 @@ export function Footer() {
             </p>
           </div>
           <p className="text-text-muted/70 text-[11px] leading-relaxed text-center sm:text-left">
-            Fagurul de Aur P.F.A. · CUI 28310788 · Nr. înmatriculare F18/235/2011 · EUID ROONRC.F18/235/2011 ·
+            POPESCU V. VETUȚA P.F.A. · CUI 28310788 · Nr. înmatriculare F18/235/2011 · EUID ROONRC.F18/235/2011 ·
             Sat Sterpoaia, Comuna Aninoasa, nr. 400, jud. Gorj, România · faguruldeaur@gmail.com · 0743 252 661
           </p>
         </div>

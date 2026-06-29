@@ -78,8 +78,8 @@ export default function TermeniPage() {
                 și de achiziționare a produselor comercializate prin intermediul acestuia.
               </p>
               <p>
-                Site-ul este operat de <strong className="text-text-primary">FAGURUL DE AUR P.F.A.</strong>{" "}
-                (denumită în continuare „Vânzătorul" sau „Fagurul de Aur"), cu sediul în Sat Sterpoaia,
+                Site-ul este operat de <strong className="text-text-primary">POPESCU V. VETUȚA P.F.A.</strong>{" "}
+                (marca comercială „Fagurul de Aur", denumită în continuare „Vânzătorul" sau „Fagurul de Aur"), cu sediul în Sat Sterpoaia,
                 Comuna Aninoasa, nr. 400, județul Gorj, România, CUI 28310788, nr. de înmatriculare
                 F18/235/2011, EUID ROONRC.F18/235/2011, e-mail: faguruldeaur@gmail.com,
                 telefon: 0743 252 661.
@@ -254,7 +254,7 @@ export default function TermeniPage() {
             <Section id="proprietate" title="10. Proprietate intelectuală">
               <p>
                 Întregul conținut al Site-ului — texte, imagini, ilustrații, logo-uri, elemente de design,
-                structură și cod — este proprietatea Fagurul de Aur P.F.A. sau a partenerilor săi și este
+                structură și cod — este proprietatea POPESCU V. VETUȚA P.F.A. (Fagurul de Aur) sau a partenerilor săi și este
                 protejat de legislația privind drepturile de autor și proprietatea intelectuală.
               </p>
               <p>

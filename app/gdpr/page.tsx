@@ -77,8 +77,9 @@ export default function GdprPage() {
             <Section id="operator" title="1. Cine suntem (Operatorul)">
               <p>
                 Operatorul datelor dumneavoastră cu caracter personal este{" "}
-                <strong className="text-text-primary">FAGURUL DE AUR P.F.A.</strong>, cu sediul în Sat
-                Sterpoaia, Comuna Aninoasa, nr. 400, județul Gorj, România, CUI 28310788, nr. de
+                <strong className="text-text-primary">POPESCU V. VETUȚA P.F.A.</strong> (marca comercială
+                „Fagurul de Aur"), cu sediul în Sat Sterpoaia, Comuna Aninoasa, nr. 400, județul Gorj,
+                România, CUI 28310788, nr. de
                 înmatriculare F18/235/2011, EUID ROONRC.F18/235/2011 (denumită în continuare
                 „Fagurul de Aur", „noi").
               </p>
