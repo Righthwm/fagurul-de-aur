@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     template: "%s — Fagurul de Aur",
   },
   description:
-    "Cumpără miere naturală de calitate superioară: salcâm, tei, mană, polifloră. Recoltată manual în România. Livrare rapidă în toată țara.",
+    "Miere artizanală 100% naturală, recoltată manual în Gorj — fără antibiotice, fără zahăr. Salcâm, tei, munte. Livrare în România 24–48h.",
   keywords: [
     "miere naturală",
     "miere pură",
@@ -40,7 +40,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Fagurul de Aur — Miere Artizanală Pură, 100% Naturală",
     description:
-      "Miere naturală artizanală, recoltată manual în România. Salcâm, tei, mană și mai mult.",
+      "Miere naturală pură online, direct de la stupină. Salcâm, tei, munte, propolis — extracție la rece, garanție puritate. Livrare rapidă.",
     type: "website",
     locale: "ro_RO",
     siteName: "Fagurul de Aur",

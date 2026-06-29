@@ -9,31 +9,24 @@ import type { Testimonial } from "@/types";
 const testimonials: Testimonial[] = [
   {
     id: "t1",
-    author: "Maria P.",
-    city: "Cluj-Napoca",
+    author: "Andreea M.",
+    city: "Timișoara",
     rating: 5,
-    text: "Cea mai buna miere pe care am mancat-o vreodata. Copiii mei refuza acum orice altceva. Aroma de salcam este delicata si autentica. Comand de doi ani si recomand tuturor prietenilor.",
+    text: "Am luat mierea de salcâm pentru fiul meu de 3 ani, care refuza orice. Acum cere singur o linguriță dimineața. Se vede că e altceva — nu se întărește în borcan ca cea din supermarket.",
   },
   {
     id: "t2",
-    author: "Alexandru D.",
-    city: "Bucuresti",
+    author: "Cătălin R.",
+    city: "Sibiu",
     rating: 5,
-    text: "Mierea poliflora este fenomenala! Gust intens, complex, care te duce direct in campiile inflorite. Am luat-o initial pentru imunitate si am ramas client permanent. Livrarea a fost rapida si impecabila.",
+    text: "Comand mierea de munte de un an. Diferența o simți la prima lingură: gust de rășină și flori de câmp, nu dulceag artificial. Livrarea a venit în 36 de ore, bine ambalată.",
   },
   {
-    id: "t4",
-    author: "Bogdan S.",
-    city: "Brasov",
+    id: "t3",
+    author: "Ioana D.",
+    city: "Craiova",
     rating: 5,
-    text: "Mierea cu capaceala este o revelatie! Niciodata nu mai mancasem miere direct din fagure. Este forma cea mai pura si mai autentica — poti simti diferenta fata de produsele din supermarket.",
-  },
-  {
-    id: "t5",
-    author: "Elena V.",
-    city: "Iasi",
-    rating: 5,
-    text: "Tinctura de propolis ne-a salvat in sezonul de toamna. Nu am mai racit deloc in ultimele 6 luni. Calitate exceptionala, concentratie reala. Recomand cu toata convingerea.",
+    text: "Tinctura de propolis a devenit obligatorie în casă la primul semn de durere în gât. Anul ăsta n-am mai ajuns la antibiotice. Se simte concentrația reală, nu apă colorată.",
   },
 ];
 

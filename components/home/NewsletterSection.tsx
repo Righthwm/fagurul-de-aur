@@ -38,11 +38,10 @@ export function NewsletterSection() {
         >
           <Mail className="text-gold-400 mx-auto mb-4" size={32} aria-hidden="true" />
           <h2 className="font-heading text-text-primary mb-3">
-            Fii primul care știe când e miere nouă
+            Primește <span className="text-gold-300">10%</span> la prima comandă
           </h2>
           <p className="text-text-secondary mb-8 text-base">
-            Abonează-te și primești{" "}
-            <strong className="text-gold-300">10% reducere</strong> la prima comandă.
+            Plus rețete cu miere, povești din stupină și acces la recoltele limitate, înaintea tuturor.
           </p>
 
           {status === "success" ? (
@@ -89,14 +88,14 @@ export function NewsletterSection() {
                 {status === "loading" ? (
                   <span className="inline-block w-4 h-4 border-2 border-bg-primary border-t-transparent rounded-full animate-spin" />
                 ) : (
-                  "Mă Abonez"
+                  "Trimite-mi codul"
                 )}
               </button>
             </form>
           )}
 
           <p className="text-text-muted text-xs mt-4">
-            Nu trimitem spam. Te poți dezabona oricând.
+            Fără spam. Un email pe lună, te dezabonezi oricând.
           </p>
         </motion.div>
       </div>

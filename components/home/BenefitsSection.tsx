@@ -6,33 +6,38 @@ import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 const benefits = [
   {
     icon: "leaf",
-    title: "100% Naturală",
-    desc: "Fără antibiotice, fără zahăr adăugat, fără chimicale. Miere pură, garantat.",
+    title: "Pură, fără compromis",
+    desc: "Zero antibiotice, zero zahăr, zero chimicale. Doar ce-au făcut albinele.",
   },
   {
     icon: "mountain",
-    title: "Origine Certificată",
-    desc: "Recoltată exclusiv din România, din zone nepoluate și protejate ecologic.",
+    title: "Din inima Gorjului",
+    desc: "Stupii noștri stau în zone nepoluate, departe de culturi tratate chimic.",
   },
   {
     icon: "jar",
-    title: "Recoltare Manuală",
-    desc: "Fiecare borcan este umplut cu grijă, prin extracție la rece, fără procesare termică.",
+    title: "Făcută de mână",
+    desc: "Extragem la rece, borcan cu borcan. Fără căldură care distruge enzimele.",
   },
   {
     icon: "box",
-    title: "Livrare Rapidă",
-    desc: "Livrăm în toată România în 24–48h.",
+    title: "Ajunge repede la tine",
+    desc: "Expediem în toată România în 24–48h, ambalată sigur.",
   },
   {
     icon: "recycle",
-    title: "Ambalaj Eco",
-    desc: "Borcane de sticlă reutilizabile, capace metalice, etichete pe hârtie reciclată.",
+    title: "Ambalaj refolosibil",
+    desc: "Sticlă, capac metalic, etichetă din hârtie reciclată.",
   },
   {
     icon: "shield",
-    title: "Garanție Puritate",
-    desc: "100% miere naturală sau banii înapoi. Garantăm autenticitatea fiecărui produs.",
+    title: "Garanție sau banii înapoi",
+    desc: "Dacă nu e cea mai bună miere gustată, îți returnăm banii.",
+  },
+  {
+    icon: "family",
+    title: "O familie, nu o fabrică",
+    desc: "Din 2009, aceeași familie de apicultori, aceleași albine, aceeași grijă în fiecare borcan.",
   },
 ];
 
@@ -78,6 +83,11 @@ const iconMap: Record<string, React.ReactNode> = {
       <path d="M10 16 L14 20 L22 12" stroke="#D4A017" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   ),
+  family: (
+    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
+      <path d="M16 27 C16 27, 5 20, 5 12.5 C5 9, 7.8 6.5, 11 6.5 C13.2 6.5, 15 7.8, 16 9.5 C17 7.8, 18.8 6.5, 21 6.5 C24.2 6.5, 27 9, 27 12.5 C27 20, 16 27, 16 27Z" stroke="#D4A017" strokeWidth="1.5" fill="rgba(212,160,23,0.12)" strokeLinejoin="round" />
+    </svg>
+  ),
 };
 
 export function BenefitsSection() {
@@ -99,7 +109,7 @@ export function BenefitsSection() {
           <span className="gold-line" />
           <h2 className="section-heading font-heading">De Ce Fagurul de Aur</h2>
           <p className="section-subheading">
-            Șase motive pentru care mierea noastră este diferită.
+            Șapte motive pentru care mierea noastră este diferită.
           </p>
         </motion.div>
 

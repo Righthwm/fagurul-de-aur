@@ -98,7 +98,7 @@ export function HeroSection() {
             animate="visible"
             className="font-body text-xs sm:text-sm font-medium uppercase tracking-[0.3em] text-gold-300 mb-4"
           >
-            Natură Pură, În Fiecare Borcan
+            Miere Pură, Direct din Stupină
           </motion.p>
 
           <motion.div
@@ -130,7 +130,7 @@ export function HeroSection() {
             animate="visible"
             className="font-body text-text-secondary text-base sm:text-lg max-w-xl mx-auto mb-10 leading-relaxed"
           >
-            Miere artizanală pură · Recoltată cu pasiune · Livrată la tine acasă
+            Recoltată manual în Gorj, fără antibiotice și fără zahăr. Livrată la tine în 24–48h.
           </motion.p>
 
           <motion.div

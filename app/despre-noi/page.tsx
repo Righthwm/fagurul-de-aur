@@ -92,8 +92,13 @@ export default function DespreNoiPage() {
                 <span className="text-gradient-gold">suflet</span>
               </h1>
               <p className="text-text-secondary text-lg leading-relaxed mb-6">
-                Fagurul de Aur nu este doar o afacere. Este o filosofie de viață — în armonie cu natura,
-                cu albinele și cu pământul care ne-a dat totul.
+                Totul a început în 2009, pe dealurile Gorjului, cu o singură familie de albine și
+                încăpățânarea de a face mierea altfel decât o găseai la raft. Fără grabă, fără
+                chimicale, fără scurtături. An după an, stupina a crescut — dar mâinile care umplu
+                fiecare borcan au rămas aceleași. Mutăm stupii după înflorire, de la salcâm la tei
+                și sus, în pajiștile de munte, ca albinele să culeagă din flori curate. Nu suntem o
+                fabrică. Suntem o familie care îți trimite acasă exact mierea pe care o pune și pe
+                masa ei.
               </p>
 
               <blockquote className="border-l-2 border-gold-400 pl-5 my-6">
