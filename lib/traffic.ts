@@ -5,9 +5,16 @@ export interface TrafficStats {
   week: number;
   month: number;
   uniqueIps: number;
-  /** Visit counts per day for the last 30 days, oldest first. */
+  /** Session (view) counts per day for the last 30 days, oldest first. */
   daily: { date: string; visits: number }[];
 }
+
+/**
+ * A "view" is a session, not a page hit: all pages opened from the same IP
+ * within this window count as one view. The same IP returning after a longer
+ * gap starts a new view, and a never-seen IP is always a new view.
+ */
+const SESSION_GAP_MS = 30 * 60 * 1000; // 30 minutes
 
 function startOfDay(d: Date): Date {
   const x = new Date(d);
@@ -28,13 +35,16 @@ export async function getTrafficStats(): Promise<TrafficStats> {
   const chartStart = new Date(todayStart);
   chartStart.setDate(chartStart.getDate() - 29); // last 30 days
 
-  const [today, week, month, chartVisits, distinctIps] = await Promise.all([
-    prisma.pageVisit.count({ where: { createdAt: { gte: todayStart } } }),
-    prisma.pageVisit.count({ where: { createdAt: { gte: weekStart } } }),
-    prisma.pageVisit.count({ where: { createdAt: { gte: monthStart } } }),
+  // Earliest point we report on. Load one session gap earlier so the first
+  // in-window hit per IP can be correctly classified as a session start.
+  const windowStart = new Date(Math.min(chartStart.getTime(), monthStart.getTime()));
+  const loadStart = new Date(windowStart.getTime() - SESSION_GAP_MS);
+
+  const [hits, distinctIps] = await Promise.all([
     prisma.pageVisit.findMany({
-      where: { createdAt: { gte: chartStart } },
-      select: { createdAt: true },
+      where: { createdAt: { gte: loadStart } },
+      select: { ip: true, createdAt: true },
+      orderBy: { createdAt: "asc" },
     }),
     prisma.pageVisit.findMany({
       where: { ip: { not: null } },
@@ -43,6 +53,24 @@ export async function getTrafficStats(): Promise<TrafficStats> {
     }),
   ]);
 
+  // Collapse page hits into sessions: a hit starts a new session (one "view")
+  // if it's the first from its IP or comes ≥ SESSION_GAP after that IP's
+  // previous hit. Hits without an IP each count as their own view.
+  const lastSeen = new Map<string, number>();
+  const sessionStarts: Date[] = [];
+  for (const h of hits) {
+    const t = new Date(h.createdAt).getTime();
+    if (!h.ip) {
+      sessionStarts.push(new Date(t));
+      continue;
+    }
+    const prev = lastSeen.get(h.ip);
+    if (prev === undefined || t - prev >= SESSION_GAP_MS) {
+      sessionStarts.push(new Date(t));
+    }
+    lastSeen.set(h.ip, t);
+  }
+
   // Pre-seed 30 day buckets so the chart has no gaps.
   const buckets = new Map<string, number>();
   for (let i = 0; i < 30; i++) {
@@ -50,8 +78,15 @@ export async function getTrafficStats(): Promise<TrafficStats> {
     d.setDate(d.getDate() + i);
     buckets.set(dayKey(d), 0);
   }
-  for (const v of chartVisits) {
-    const key = dayKey(new Date(v.createdAt));
+
+  let today = 0;
+  let week = 0;
+  let month = 0;
+  for (const s of sessionStarts) {
+    if (s >= todayStart) today++;
+    if (s >= weekStart) week++;
+    if (s >= monthStart) month++;
+    const key = dayKey(s);
     if (buckets.has(key)) buckets.set(key, (buckets.get(key) ?? 0) + 1);
   }
 
