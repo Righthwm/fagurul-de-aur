@@ -49,7 +49,7 @@ export function NewsletterSection() {
         >
           <Mail className="text-gold-400 mx-auto mb-4" size={32} aria-hidden="true" />
           <h2 className="font-heading text-text-primary mb-3">
-            Primește <span className="text-gold-300">10%</span> la prima comandă
+            Primește <span className="text-gold-300">5%</span> la prima comandă
           </h2>
           <p className="text-text-secondary mb-8 text-base">
             Plus rețete cu miere, povești din stupină și acces la recoltele limitate, înaintea tuturor.
@@ -64,7 +64,7 @@ export function NewsletterSection() {
               <CheckCircle size={40} className="text-success" />
               <p className="text-text-primary font-heading text-xl">Mulțumim pentru abonare!</p>
               <p className="text-text-muted text-sm">
-                Codul tău de 10%:{" "}
+                Codul tău de 5%:{" "}
                 <strong className="text-gold-300 tracking-wider">{NEWSLETTER_DISCOUNT_CODE}</strong>
               </p>
               <p className="text-text-muted text-xs">Ți l-am trimis și pe email. Folosește-l la prima comandă.</p>

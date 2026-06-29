@@ -244,8 +244,8 @@ export async function sendNewsletterSignup(
     const { error } = await getClient().emails.send({
       from: MAIL_FROM,
       to: email,
-      subject: "Reducerea ta de 10% la Fagurul de Aur",
-      text: `Bun venit la Fagurul de Aur!\n\nCodul tău de 10% la prima comandă: ${NEWSLETTER_DISCOUNT_CODE}\n\nComandă miere pură din Gorj: https://faguruldeaur.ro/magazin`,
+      subject: "Reducerea ta de 5% la Fagurul de Aur",
+      text: `Bun venit la Fagurul de Aur!\n\nCodul tău de 5% la prima comandă: ${NEWSLETTER_DISCOUNT_CODE}\n\nComandă miere pură din Gorj: https://faguruldeaur.ro/magazin`,
       html: `
         <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">
           <h2 style="color:#B5700A">Bun venit la Fagurul de Aur 🐝</h2>

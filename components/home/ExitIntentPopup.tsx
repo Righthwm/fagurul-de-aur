@@ -9,7 +9,7 @@ const SEEN_KEY = "fda-exit-popup-seen";
 
 /**
  * Exit-intent recovery popup: fires once (per ~14 days) when the cursor leaves
- * toward the top of the viewport, offering the 10% first-order discount.
+ * toward the top of the viewport, offering the 5% first-order discount.
  */
 export function ExitIntentPopup() {
   const [open, setOpen] = useState(false);
@@ -70,7 +70,7 @@ export function ExitIntentPopup() {
           onClick={() => setOpen(false)}
           role="dialog"
           aria-modal="true"
-          aria-label="Ofertă reducere 10%"
+          aria-label="Ofertă reducere 5%"
         >
           <motion.div
             initial={{ scale: 0.9, y: 20 }}
@@ -92,7 +92,7 @@ export function ExitIntentPopup() {
                 <CheckCircle size={40} className="text-success" />
                 <p className="font-heading text-xl text-text-primary">Gata, e al tău!</p>
                 <p className="text-text-secondary text-sm">
-                  Codul tău de 10%:{" "}
+                  Codul tău de 5%:{" "}
                   <strong className="text-gold-300 tracking-wider">{NEWSLETTER_DISCOUNT_CODE}</strong>
                 </p>
                 <p className="text-text-muted text-xs">Ți l-am trimis și pe email.</p>
@@ -101,7 +101,7 @@ export function ExitIntentPopup() {
               <>
                 <Gift size={36} className="text-gold-400 mx-auto mb-4" aria-hidden="true" />
                 <h2 className="font-heading text-2xl text-text-primary mb-2">
-                  Stai puțin — 10% sunt ai tăi
+                  Stai puțin — 5% sunt ai tăi
                 </h2>
                 <p className="text-text-secondary text-sm mb-6">
                   Înainte să pleci, ia-ți reducerea la prima comandă de miere pură din Gorj.
@@ -117,7 +117,7 @@ export function ExitIntentPopup() {
                     required
                   />
                   <button type="submit" className="btn-primary w-full">
-                    Vreau reducerea de 10%
+                    Vreau reducerea de 5%
                   </button>
                 </form>
                 <p className="text-text-muted text-xs mt-4">
