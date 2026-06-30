@@ -1,11 +1,11 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { estimateShipping, cartSubtotal } from "@/lib/shipping";
+import { localityTypeOf } from "@/lib/localities";
 
 const schema = z.object({
   county: z.string().min(1),
   locality: z.string().min(1),
-  localityType: z.enum(["urban", "rural"]),
   paymentMethod: z.enum(["card", "ramburs"]),
   items: z
     .array(
@@ -28,7 +28,7 @@ export async function POST(request: Request) {
       items: data.items,
       county: data.county,
       locality: data.locality,
-      localityType: data.localityType,
+      localityType: localityTypeOf(data.county, data.locality),
       cashOnDelivery,
     });
 

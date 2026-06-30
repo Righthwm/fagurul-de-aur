@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { estimateShipping, cartSubtotal } from "@/lib/shipping";
 import { couponDiscount, getCoupon } from "@/lib/coupons";
+import { localityTypeOf } from "@/lib/localities";
 
 /** Shared validation for both the ramburs checkout and card payment-initiate routes. */
 export const checkoutInputSchema = z.object({
@@ -15,7 +16,6 @@ export const checkoutInputSchema = z.object({
   shippingAddress: z.object({
     county: z.string().min(1),
     city: z.string().min(1),
-    localityType: z.enum(["urban", "rural"]),
     address: z.string().min(5),
     postalCode: z.string().regex(/^\d{6}$/),
   }),
@@ -68,7 +68,7 @@ export async function persistOrder(input: CheckoutInput, paymentStatus: string):
     items: lines,
     county: input.shippingAddress.county,
     locality: input.shippingAddress.city,
-    localityType: input.shippingAddress.localityType,
+    localityType: localityTypeOf(input.shippingAddress.county, input.shippingAddress.city),
     cashOnDelivery: input.paymentMethod === "ramburs" ? subtotal : 0,
   });
   const shipping = shippingResult.free ? 0 : shippingResult.cost ?? 0;

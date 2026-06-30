@@ -43,7 +43,6 @@ const schema = z
       .transform((v) => v.replace(/[\s.-]/g, ""))
       .pipe(z.string().regex(/^(\+40|0)?7\d{8}$/, "Telefon invalid (ex: 07XX XXX XXX)")),
     county: z.string().min(1, "Alege județul"),
-    localityType: z.enum(["urban", "rural"]),
     city: z.string().min(1, "Alege localitatea"),
     address: z.string().min(5, "Strada, numărul, bloc/apartament"),
     postalCode: z.string().regex(/^\d{6}$/, "Cod poștal din 6 cifre"),
@@ -113,13 +112,12 @@ export default function CheckoutPage() {
     formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(schema),
-    defaultValues: { paymentMethod: "ramburs", terms: false, localityType: "urban" },
+    defaultValues: { paymentMethod: "ramburs", terms: false },
   });
 
   const paymentMethod = watch("paymentMethod");
   const county = watch("county");
   const locality = watch("city");
-  const localityType = watch("localityType");
 
   // Gate cart-derived values on `mounted`: the cart is rehydrated from
   // localStorage on the client, so reading it during SSR / first render would
@@ -166,7 +164,7 @@ export default function CheckoutPage() {
       setEstimate({ status: "free" });
       return;
     }
-    if (!county || !locality || !localityType) {
+    if (!county || !locality) {
       setEstimate({ status: "idle" });
       return;
     }
@@ -179,7 +177,6 @@ export default function CheckoutPage() {
         body: JSON.stringify({
           county,
           locality,
-          localityType,
           paymentMethod,
           items: items.map((i) => ({
             productId: i.product.id,
@@ -198,7 +195,7 @@ export default function CheckoutPage() {
         .catch(() => setEstimate({ status: "unavailable" }));
     }, 500);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, county, locality, localityType, paymentMethod, freeShipping, itemsSig]);
+  }, [mounted, county, locality, paymentMethod, freeShipping, itemsSig]);
 
   const shippingCost = estimate.status === "available" ? estimate.cost : 0;
   const discount = couponDiscount(subtotal, appliedCoupon);
@@ -250,7 +247,6 @@ export default function CheckoutPage() {
       shippingAddress: {
         county: data.county,
         city: data.city,
-        localityType: data.localityType,
         address: data.address,
         postalCode: data.postalCode,
       },
@@ -432,12 +428,6 @@ export default function CheckoutPage() {
                     {localities.map((l) => (
                       <option key={l} value={l}>{l}</option>
                     ))}
-                  </select>
-                </Field>
-                <Field label="Tip localitate *" htmlFor="localityType" error={errors.localityType?.message}>
-                  <select id="localityType" className={`input-field ${errors.localityType ? "error" : ""}`} {...register("localityType")}>
-                    <option value="urban">Urban (oraș / municipiu)</option>
-                    <option value="rural">Rural (comună / sat)</option>
                   </select>
                 </Field>
                 <Field label="Cod poștal *" htmlFor="postalCode" error={errors.postalCode?.message}>

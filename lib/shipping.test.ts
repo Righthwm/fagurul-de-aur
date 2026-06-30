@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import { packageWeightKg, cartSubtotal, estimateShipping } from "./shipping";
 import { baseRateForWeight, provisionalTariff, SHIPPING_CONFIG } from "./shipping-config";
+import { localityTypeOf } from "./localities";
 
 // miere-salcam 1kg = 45 lei / 1.4 kg ; propolis 20ml = 15 lei / 0.2 kg
 const salcam = { productId: "miere-salcam", variantPrice: 45, quantity: 2 };
@@ -74,5 +75,23 @@ describe("provisional shipping config", () => {
   it("dispatches from the Petroșani agency", () => {
     expect(SHIPPING_CONFIG.ORIGIN.locality).toBe("Petroșani");
     expect(SHIPPING_CONFIG.ORIGIN.county).toBe("Hunedoara");
+  });
+});
+
+describe("localityTypeOf (auto urban/rural detection)", () => {
+  it("classifies cities as urban", () => {
+    expect(localityTypeOf("Hunedoara", "Petroșani")).toBe("urban");
+    expect(localityTypeOf("Gorj", "Târgu Jiu")).toBe("urban");
+    expect(localityTypeOf("Cluj", "Cluj-Napoca")).toBe("urban");
+    expect(localityTypeOf("București", "Sector 1")).toBe("urban");
+  });
+
+  it("classifies villages as rural", () => {
+    expect(localityTypeOf("Gorj", "Sterpoaia")).toBe("rural");
+    expect(localityTypeOf("Gorj", "Albeni")).toBe("rural");
+  });
+
+  it("defaults unknown localities to rural", () => {
+    expect(localityTypeOf("Gorj", "Sat Inexistent")).toBe("rural");
   });
 });
