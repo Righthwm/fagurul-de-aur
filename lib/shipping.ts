@@ -1,6 +1,7 @@
 import { products } from "@/lib/products";
 import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
 import { estimateTariff, FanCourierUnavailableError } from "@/lib/fancourier";
+import { provisionalTariff } from "@/lib/shipping-config";
 
 /** Fallback weight (kg) for a cart line whose variant has no configured weight. */
 const DEFAULT_ITEM_WEIGHT_KG = 1;
@@ -31,8 +32,13 @@ export function cartSubtotal(items: CartLineInput[]): number {
 export interface ShippingResult {
   /** Qualifies for free shipping (subtotal >= threshold). */
   free: boolean;
-  /** false => Fan Courier couldn't price it ("se calculează la livrare"). */
+  /** false => couldn't price it at all ("se calculează la livrare"). */
   available: boolean;
+  /**
+   * true => the cost comes from the provisional table (lib/shipping-config.ts),
+   * not the live Fan Courier API. Drives the "preț estimativ" note in checkout.
+   */
+  estimated: boolean;
   /** Cost in lei: 0 when free, a number when priced, null when unavailable. */
   cost: number | null;
   weightKg: number;
@@ -57,7 +63,7 @@ export async function estimateShipping(input: EstimateInput): Promise<ShippingRe
   const subtotal = cartSubtotal(input.items);
 
   if (subtotal >= FREE_SHIPPING_THRESHOLD) {
-    return { free: true, available: true, cost: 0, weightKg };
+    return { free: true, available: true, estimated: false, cost: 0, weightKg };
   }
 
   try {
@@ -69,10 +75,13 @@ export async function estimateShipping(input: EstimateInput): Promise<ShippingRe
       cashOnDelivery: input.cashOnDelivery,
       declaredValue: subtotal,
     });
-    return { free: false, available: true, cost, weightKg };
+    return { free: false, available: true, estimated: false, cost, weightKg };
   } catch (error) {
     if (error instanceof FanCourierUnavailableError) {
-      return { free: false, available: false, cost: null, weightKg };
+      // No live courier API yet: fall back to the provisional table so the
+      // customer still sees a concrete (estimated) shipping cost.
+      const cost = provisionalTariff(weightKg, input.localityType);
+      return { free: false, available: true, estimated: true, cost, weightKg };
     }
     throw error;
   }

@@ -129,7 +129,7 @@ export default function CheckoutPage() {
   // ---- Fan Courier shipping estimate ----
   type Estimate =
     | { status: "idle" | "loading" | "free" | "unavailable" }
-    | { status: "available"; cost: number };
+    | { status: "available"; cost: number; estimated: boolean };
   const [localities, setLocalities] = useState<string[]>([]);
   const [estimate, setEstimate] = useState<Estimate>({ status: "idle" });
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -188,9 +188,10 @@ export default function CheckoutPage() {
         }),
       })
         .then((r) => r.json())
-        .then((d: { free: boolean; available: boolean; cost: number | null }) => {
+        .then((d: { free: boolean; available: boolean; estimated: boolean; cost: number | null }) => {
           if (d.free) setEstimate({ status: "free" });
-          else if (d.available && typeof d.cost === "number") setEstimate({ status: "available", cost: d.cost });
+          else if (d.available && typeof d.cost === "number")
+            setEstimate({ status: "available", cost: d.cost, estimated: !!d.estimated });
           else setEstimate({ status: "unavailable" });
         })
         .catch(() => setEstimate({ status: "unavailable" }));
@@ -602,6 +603,11 @@ export default function CheckoutPage() {
                     )}
                   </dd>
                 </div>
+                {!freeShipping && estimate.status === "available" && estimate.estimated && (
+                  <p className="text-xs text-text-muted pt-1">
+                    Preț estimativ — poate varia ușor față de costul final de livrare.
+                  </p>
+                )}
                 {!freeShipping && (
                   <p className="text-xs text-text-muted pt-1">
                     Livrare gratuită la comenzi peste {FREE_SHIPPING_THRESHOLD} lei.

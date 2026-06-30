@@ -1,5 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { packageWeightKg, cartSubtotal, estimateShipping } from "./shipping";
+import { baseRateForWeight, ruralSurchargeForKm, provisionalTariff } from "./shipping-config";
 
 // miere-salcam 1kg = 45 lei / 1.4 kg ; propolis 20ml = 15 lei / 0.2 kg
 const salcam = { productId: "miere-salcam", variantPrice: 45, quantity: 2 };
@@ -32,11 +33,46 @@ describe("estimateShipping", () => {
     expect(result.cost).toBe(0);
   });
 
-  it("reports unavailable below threshold when Fan Courier is not configured", async () => {
-    const result = await estimateShipping({ items: [salcam, propolis], ...addr }); // 105 lei
+  it("falls back to the provisional table below threshold when Fan Courier is not configured", async () => {
+    const result = await estimateShipping({ items: [salcam, propolis], ...addr }); // 105 lei, 3.0 kg
     expect(result.free).toBe(false);
-    expect(result.available).toBe(false);
-    expect(result.cost).toBeNull();
+    expect(result.available).toBe(true);
+    expect(result.estimated).toBe(true);
+    expect(result.cost).toBe(22); // 3 kg urban bracket
     expect(result.weightKg).toBe(3.0);
+  });
+
+  it("adds the rural surcharge to the provisional estimate", async () => {
+    const rural = { county: "Gorj", locality: "Sterpoaia", localityType: "rural" as const, cashOnDelivery: 0 };
+    const result = await estimateShipping({ items: [salcam, propolis], ...rural }); // 3.0 kg
+    expect(result.estimated).toBe(true);
+    expect(result.cost).toBe(22 + 15); // 3 kg urban base + 30 km default rural bracket
+  });
+});
+
+describe("provisional shipping config", () => {
+  it("prices each weight bracket", () => {
+    expect(baseRateForWeight(0.8)).toBe(18); // ≤1 kg
+    expect(baseRateForWeight(1.4)).toBe(20); // ≤2 kg
+    expect(baseRateForWeight(3)).toBe(22); // ≤3 kg
+    expect(baseRateForWeight(4.5)).toBe(25); // ≤5 kg
+    expect(baseRateForWeight(9)).toBe(32); // ≤10 kg
+    expect(baseRateForWeight(20)).toBe(48); // ≤20 kg
+  });
+
+  it("adds an overage fee above the top bracket", () => {
+    expect(baseRateForWeight(23)).toBe(48 + 3 * 2); // 3 kg over 20 → +6 lei
+  });
+
+  it("maps distance to the right rural surcharge", () => {
+    expect(ruralSurchargeForKm(5)).toBe(5);
+    expect(ruralSurchargeForKm(20)).toBe(10);
+    expect(ruralSurchargeForKm(40)).toBe(15);
+    expect(ruralSurchargeForKm(120)).toBe(20);
+  });
+
+  it("only surcharges rural localities", () => {
+    expect(provisionalTariff(3, "urban")).toBe(22);
+    expect(provisionalTariff(3, "rural")).toBe(22 + 15);
   });
 });
