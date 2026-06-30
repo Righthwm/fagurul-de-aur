@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -565,10 +566,19 @@ export default function CheckoutPage() {
                     return (
                       <li key={`${item.product.id}-${item.selectedVariant.price}`} className="flex items-center gap-3 pb-3 border-b border-gold-400/8">
                         <div
-                          className="w-10 h-10 rounded-sm shrink-0"
-                          style={{ background: `radial-gradient(circle at 35% 35%, ${item.product.color}CC, ${item.product.color}55)` }}
-                          aria-hidden="true"
-                        />
+                          className="relative w-11 h-11 rounded-sm shrink-0 overflow-hidden border border-gold-400/10"
+                          style={{ background: `radial-gradient(circle at 35% 30%, ${item.product.color}33, ${item.product.color}11)` }}
+                        >
+                          {item.product.image ? (
+                            <Image
+                              src={item.product.image}
+                              alt={item.product.name}
+                              fill
+                              sizes="44px"
+                              className="object-contain p-0.5 drop-shadow-[0_3px_5px_rgba(0,0,0,0.35)]"
+                            />
+                          ) : null}
+                        </div>
                         <div className="flex-1 min-w-0">
                           <p className="text-text-primary text-sm truncate">{item.product.name}</p>
                           <p className="text-text-muted text-xs">{variantLabel} × {item.quantity}</p>
