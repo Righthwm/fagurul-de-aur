@@ -15,6 +15,9 @@ const PASSWORD = process.env.FAN_COURIER_PASSWORD ?? "";
 const CLIENT_ID = process.env.FAN_COURIER_CLIENT_ID ?? "";
 /** Service name from {{url}}/reports/services (e.g. "Standard", "Cont Colector"). */
 const SERVICE = process.env.FAN_COURIER_SERVICE ?? "Standard";
+/** Dispatch point (sender) — defaults to the Petroșani, Hunedoara agency. */
+const SENDER_COUNTY = process.env.FAN_COURIER_SENDER_COUNTY ?? "Hunedoara";
+const SENDER_LOCALITY = process.env.FAN_COURIER_SENDER_LOCALITY ?? "Petroșani";
 
 export class FanCourierUnavailableError extends Error {
   constructor(message: string) {
@@ -90,6 +93,9 @@ export async function estimateTariff(input: TariffInput): Promise<number> {
   }
   params.set("recipient[locality]", input.locality);
   params.set("recipient[county]", input.county);
+  // Dispatch from the Petroșani (Hunedoara) agency.
+  params.set("sender[locality]", SENDER_LOCALITY);
+  params.set("sender[county]", SENDER_COUNTY);
 
   const res = await fetch(`${BASE_URL}/reports/awb/internal-tariff?${params.toString()}`, {
     method: "GET",

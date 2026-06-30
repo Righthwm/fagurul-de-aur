@@ -1,11 +1,6 @@
 import { describe, it, expect } from "vitest";
 import { packageWeightKg, cartSubtotal, estimateShipping } from "./shipping";
-import {
-  baseRateForWeight,
-  ruralSurchargeForKm,
-  provisionalTariff,
-  estimateDistanceKm,
-} from "./shipping-config";
+import { baseRateForWeight, provisionalTariff, SHIPPING_CONFIG } from "./shipping-config";
 
 // miere-salcam 1kg = 45 lei / 1.4 kg ; propolis 20ml = 15 lei / 0.2 kg
 const salcam = { productId: "miere-salcam", variantPrice: 45, quantity: 2 };
@@ -47,11 +42,11 @@ describe("estimateShipping", () => {
     expect(result.weightKg).toBe(3.0);
   });
 
-  it("adds the precomputed rural surcharge to the provisional estimate", async () => {
+  it("adds the flat rural surcharge to the provisional estimate", async () => {
     const rural = { county: "Gorj", locality: "Sterpoaia", localityType: "rural" as const, cashOnDelivery: 0 };
     const result = await estimateShipping({ items: [salcam, propolis], ...rural }); // 3.0 kg
     expect(result.estimated).toBe(true);
-    expect(result.cost).toBe(22 + 15); // 3 kg base + Sterpoaia 31 km → 25–50 km bracket
+    expect(result.cost).toBe(22 + SHIPPING_CONFIG.ruralSurchargeLei); // 3 kg base + flat rural fee
   });
 });
 
@@ -69,30 +64,15 @@ describe("provisional shipping config", () => {
     expect(baseRateForWeight(23)).toBe(48 + 3 * 2); // 3 kg over 20 → +6 lei
   });
 
-  it("maps distance to the right rural surcharge", () => {
-    expect(ruralSurchargeForKm(5)).toBe(5);
-    expect(ruralSurchargeForKm(20)).toBe(10);
-    expect(ruralSurchargeForKm(40)).toBe(15);
-    expect(ruralSurchargeForKm(120)).toBe(20);
+  it("applies a flat national rate, with a fixed surcharge only for rural", () => {
+    const fee = SHIPPING_CONFIG.ruralSurchargeLei;
+    expect(provisionalTariff(3, "urban")).toBe(22); // same price anywhere in the country
+    expect(provisionalTariff(3, "rural")).toBe(22 + fee);
+    expect(provisionalTariff(0.8, "rural")).toBe(18 + fee);
   });
 
-  it("only surcharges rural localities", () => {
-    expect(provisionalTariff(3, "urban")).toBe(22);
-    expect(provisionalTariff(3, "rural")).toBe(22 + 15); // no locality → default 30 km
-  });
-
-  it("reads the precomputed distance per Gorj locality", () => {
-    expect(estimateDistanceKm("Gorj", "Barza", "rural")).toBe(9);
-    expect(estimateDistanceKm("Gorj", "Arcani", "rural")).toBe(12);
-    expect(estimateDistanceKm("Gorj", "Bojinu", "rural")).toBe(56);
-    expect(estimateDistanceKm("Gorj", "Barza", "urban")).toBe(0); // urban = agency in town
-    expect(estimateDistanceKm("Gorj", "Sat Inexistent", "rural")).toBe(30); // fallback default
-  });
-
-  it("brackets the surcharge by real distance", () => {
-    expect(provisionalTariff(3, "rural", "Gorj", "Barza")).toBe(22 + 5); // 9 km
-    expect(provisionalTariff(3, "rural", "Gorj", "Arcani")).toBe(22 + 10); // 12 km
-    expect(provisionalTariff(3, "rural", "Gorj", "Alimpești")).toBe(22 + 15); // 41 km
-    expect(provisionalTariff(3, "rural", "Gorj", "Bojinu")).toBe(22 + 20); // 56 km
+  it("dispatches from the Petroșani agency", () => {
+    expect(SHIPPING_CONFIG.ORIGIN.locality).toBe("Petroșani");
+    expect(SHIPPING_CONFIG.ORIGIN.county).toBe("Hunedoara");
   });
 });
