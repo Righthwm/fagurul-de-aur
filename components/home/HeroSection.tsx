@@ -5,7 +5,6 @@ import Image from "next/image";
 import { motion } from "framer-motion";
 import { BeeAnimation } from "@/components/animations/BeeAnimation";
 import { ParticleField } from "@/components/animations/ParticleField";
-import { HoneyJar } from "@/components/ui/HoneyJar";
 
 const fadeUp = (delay: number) => ({
   hidden: { opacity: 0, y: 30 },
@@ -116,12 +115,14 @@ export function HeroSection() {
               transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
               className="relative"
             >
-              {/* Full jar with lid */}
-              <HoneyJar
-                color="#D89A28"
-                variant="hero"
+              {/* Real Fagurul de Aur jar (relabelled photo) */}
+              <Image
+                src="/images/hero-jar.webp"
+                alt="Borcan de miere naturală Fagurul de Aur, recoltată manual în România"
                 width={280}
-                className="w-[200px] sm:w-[240px] lg:w-[280px] h-auto"
+                height={411}
+                priority
+                className="w-[190px] sm:w-[230px] lg:w-[270px] h-auto drop-shadow-[0_20px_30px_rgba(0,0,0,0.45)]"
               />
             </motion.div>
           </motion.div>
