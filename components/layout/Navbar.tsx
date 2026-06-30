@@ -14,6 +14,7 @@ import { useScrollY } from "@/hooks/useParallax";
 const navLinks = [
   { href: "/", label: "Acasă" },
   { href: "/magazin", label: "Magazin" },
+  { href: "/blog", label: "Blog" },
   { href: "/despre-noi", label: "Despre Noi" },
   { href: "/contact", label: "Contact" },
 ];

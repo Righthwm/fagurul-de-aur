@@ -206,6 +206,34 @@ export function faqSchema(faqs: { q: string; a: string }[]) {
   };
 }
 
+/** schema.org BlogPosting/Article for a blog post. */
+export function blogPostingSchema(post: {
+  slug: string;
+  title: string;
+  description: string;
+  date: string;
+  updated?: string;
+  image: string;
+  keywords: string[];
+}) {
+  const url = `${siteConfig.url}/blog/${post.slug}`;
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `${url}#article`,
+    mainEntityOfPage: { "@type": "WebPage", "@id": url },
+    headline: post.title,
+    description: post.description,
+    image: abs(post.image),
+    datePublished: post.date,
+    dateModified: post.updated ?? post.date,
+    inLanguage: "ro-RO",
+    keywords: post.keywords.join(", "),
+    author: { "@type": "Organization", name: siteConfig.name, url: siteConfig.url },
+    publisher: { "@id": `${siteConfig.url}/#organization` },
+  };
+}
+
 export function generateProductStructuredData(product: Product): string {
   const data = {
     "@context": "https://schema.org",
