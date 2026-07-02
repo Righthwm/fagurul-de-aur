@@ -101,7 +101,7 @@ export function generateProductMetadata(product: Product): Metadata {
   return buildMetadata({
     title: `${product.name} naturală, recoltată manual`,
     description: `${product.description} Comandă ${product.name} 100% naturală de la Fagurul de Aur — extracție la rece, fără aditivi. ${product.price} lei/${product.priceUnit}.`,
-    path: `/magazin/${product.slug}`,
+    path: `/miere/${product.slug}`,
     image: product.image,
     keywords: [product.name.toLowerCase(), ...product.tags, "miere naturală", "cumpără miere online"],
   });
@@ -250,7 +250,7 @@ export function generateProductStructuredData(product: Product): string {
       availability: product.inStock
         ? "https://schema.org/InStock"
         : "https://schema.org/OutOfStock",
-      url: `${siteConfig.url}/magazin/${product.slug}`,
+      url: `${siteConfig.url}/miere/${product.slug}`,
       seller: { "@id": `${siteConfig.url}/#organization` },
     },
     aggregateRating: {

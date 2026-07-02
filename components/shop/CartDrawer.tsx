@@ -72,7 +72,7 @@ export function CartDrawer() {
                 <div className="flex flex-col items-center justify-center h-full gap-4 text-center">
                   <ShoppingBasket size={48} className="text-text-muted opacity-30" />
                   <p className="text-text-muted text-sm">Coșul tău este gol</p>
-                  <button onClick={() => navigate("/magazin")} className="btn-secondary text-xs px-6 py-2">
+                  <button onClick={() => navigate("/miere")} className="btn-secondary text-xs px-6 py-2">
                     Descoperă Produsele
                   </button>
                 </div>

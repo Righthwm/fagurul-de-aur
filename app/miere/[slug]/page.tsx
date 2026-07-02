@@ -29,8 +29,8 @@ export default async function ProductPage({ params }: Props) {
   const crumbs = jsonLd(
     breadcrumbSchema([
       { name: "Acasă", path: "/" },
-      { name: "Magazin", path: "/magazin" },
-      { name: product.name, path: `/magazin/${product.slug}` },
+      { name: "Magazin", path: "/miere" },
+      { name: product.name, path: `/miere/${product.slug}` },
     ])
   );
 
@@ -50,7 +50,7 @@ export default async function ProductPage({ params }: Props) {
               </li>
               <li aria-hidden="true">/</li>
               <li>
-                <a href="/magazin" className="hover:text-gold-300 transition-colors">Magazin</a>
+                <a href="/miere" className="hover:text-gold-300 transition-colors">Magazin</a>
               </li>
               <li aria-hidden="true">/</li>
               <li className="text-text-secondary" aria-current="page">{product.name}</li>

@@ -27,7 +27,7 @@ export function SeasonBanner() {
               <strong className="text-gold-300">Recolta de salcâm 2026 a ieșit din stupină</strong>{" "}
               — în cantitate limitată. Anul trecut s-a terminat în 3 săptămâni.
             </p>
-            <Link href="/magazin" className="btn-primary text-xs whitespace-nowrap shrink-0">
+            <Link href="/miere" className="btn-primary text-xs whitespace-nowrap shrink-0">
               Comandă recolta nouă
             </Link>
           </div>

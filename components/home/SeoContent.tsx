@@ -61,7 +61,7 @@ export function SeoContent() {
             Fiecare borcan poartă amprenta culesului din care provine. Mierea de salcâm cristalizează lent și
             are aromă delicată; mierea de tei este calmantă și aromatică; mierea de munte concentrează plante
             medicinale alpine; iar mierea polifloră oferă gustul complet al verii românești. Descoperă întreaga
-            gamă în <Link href="/magazin" className="text-gold-300 hover:underline">magazinul nostru de miere naturală</Link>{" "}
+            gamă în <Link href="/miere" className="text-gold-300 hover:underline">magazinul nostru de miere naturală</Link>{" "}
             sau află <Link href="/despre-noi" className="text-gold-300 hover:underline">povestea stupinei Fagurul de Aur</Link>.
           </p>
 

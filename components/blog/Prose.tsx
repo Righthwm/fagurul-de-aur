@@ -49,7 +49,7 @@ export function A({ href, children }: { href: string; children: ReactNode }) {
 }
 
 /** Inline call-to-action card linking back into the shop. */
-export function ShopCTA({ children, href = "/magazin", label = "Vezi mierea naturală" }: { children: ReactNode; href?: string; label?: string }) {
+export function ShopCTA({ children, href = "/miere", label = "Vezi mierea naturală" }: { children: ReactNode; href?: string; label?: string }) {
   return (
     <div className="my-8 rounded-sm border border-gold-400/20 bg-bg-surface p-6 flex flex-col sm:flex-row sm:items-center gap-4 justify-between">
       <p className="text-text-secondary text-sm leading-relaxed m-0">{children}</p>

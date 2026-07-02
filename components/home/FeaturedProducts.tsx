@@ -72,7 +72,7 @@ function ProductFeaturedCard({ product }: { product: Product }) {
       {/* Actions */}
       <div className="px-6 pb-6 pt-2 flex items-center gap-3">
         <Link
-          href={`/magazin/${product.slug}`}
+          href={`/miere/${product.slug}`}
           className="btn-secondary flex-1 px-3 text-sm whitespace-nowrap"
         >
           Vezi detalii
@@ -126,7 +126,7 @@ export function FeaturedProducts() {
         </div>
 
         <div className="text-center mt-12">
-          <Link href="/magazin" className="btn-secondary">
+          <Link href="/miere" className="btn-secondary">
             Vezi toate produsele
           </Link>
         </div>

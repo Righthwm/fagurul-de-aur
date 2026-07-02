@@ -37,7 +37,7 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
       )}
 
-      <Link href={`/magazin/${product.slug}`} className="flex flex-col items-center pt-10 pb-4 px-6">
+      <Link href={`/miere/${product.slug}`} className="flex flex-col items-center pt-10 pb-4 px-6">
         <motion.div
           animate={{ y: [0, -3, 0] }}
           transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}

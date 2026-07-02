@@ -22,14 +22,14 @@ function InstagramIcon() {
 
 const navLinks = [
   { href: "/", label: "Acasă" },
-  { href: "/magazin", label: "Magazin" },
+  { href: "/miere", label: "Magazin" },
   { href: "/blog", label: "Blog" },
   { href: "/despre-noi", label: "Despre Noi" },
   { href: "/contact", label: "Contact" },
 ];
 
 // Generated from the catalog so the footer always lists every product.
-const productLinks = products.map((p) => ({ href: `/magazin/${p.slug}`, label: p.name }));
+const productLinks = products.map((p) => ({ href: `/miere/${p.slug}`, label: p.name }));
 
 const legalLinks = [
   { href: "/gdpr", label: "Politică GDPR" },

@@ -328,7 +328,7 @@ export default function CheckoutPage() {
                 <span className="text-text-primary">24–48h lucrătoare</span>
               </div>
             </div>
-            <Link href="/magazin" className="btn-primary">
+            <Link href="/miere" className="btn-primary">
               Înapoi la magazin
             </Link>
           </motion.div>
@@ -349,7 +349,7 @@ export default function CheckoutPage() {
           <p className="text-text-secondary mb-8">
             Adaugă produse în coș pentru a finaliza o comandă.
           </p>
-          <Link href="/magazin" className="btn-primary">
+          <Link href="/miere" className="btn-primary">
             Descoperă produsele
           </Link>
         </div>

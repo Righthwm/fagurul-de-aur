@@ -12,7 +12,7 @@ interface MobileMenuProps {
 
 const navLinks = [
   { href: "/", label: "Acasă" },
-  { href: "/magazin", label: "Magazin" },
+  { href: "/miere", label: "Magazin" },
   { href: "/despre-noi", label: "Despre Noi" },
   { href: "/contact", label: "Contact" },
 ];

@@ -46,7 +46,7 @@ function BeneficiiMierePoliflora() {
         recoltarea prin extracție la rece este esențială.
       </P>
 
-      <ShopCTA href="/magazin/miere-poliflora" label="Comandă miere polifloră">
+      <ShopCTA href="/miere/miere-poliflora" label="Comandă miere polifloră">
         Mierea noastră polifloră este recoltată manual din pajiștile României și extrasă la rece, ca să
         păstreze toate enzimele și antioxidanții.
       </ShopCTA>
@@ -67,7 +67,7 @@ function BeneficiiMierePoliflora() {
         <A href="/blog/cum-recunosti-mierea-naturala">cum recunoști mierea naturală</A>.
       </P>
       <P>
-        Descoperă întreaga gamă în <A href="/magazin">magazinul nostru de miere naturală</A> sau află{" "}
+        Descoperă întreaga gamă în <A href="/miere">magazinul nostru de miere naturală</A> sau află{" "}
         <A href="/despre-noi">povestea stupinei Fagurul de Aur</A>.
       </P>
     </>
@@ -125,7 +125,7 @@ function MiereCrudaVsPasteurizata() {
         producător de încredere. Dacă mierea s-a zaharisit în borcan, e un semn bun de autenticitate — nu un
         defect. Vezi și ghidul nostru despre{" "}
         <A href="/blog/cum-recunosti-mierea-naturala">cum recunoști mierea naturală pură</A> și{" "}
-        <A href="/magazin/miere-salcam">mierea de salcâm cu cristalizare lentă</A>.
+        <A href="/miere/miere-salcam">mierea de salcâm cu cristalizare lentă</A>.
       </P>
     </>
   );
@@ -193,9 +193,9 @@ function CumRecunostiMiereaNaturala() {
       <H2>Pe scurt</H2>
       <P>
         O miere naturală pură cristalizează, curge gros, are aromă specifică și o proveniență transparentă.
-        Descoperă mierea noastră de <A href="/magazin/miere-tei">tei</A>,{" "}
-        <A href="/magazin/miere-salcam">salcâm</A> și <A href="/magazin/miere-munte">munte</A> în{" "}
-        <A href="/magazin">magazinul Fagurul de Aur</A>.
+        Descoperă mierea noastră de <A href="/miere/miere-tei">tei</A>,{" "}
+        <A href="/miere/miere-salcam">salcâm</A> și <A href="/miere/miere-munte">munte</A> în{" "}
+        <A href="/miere">magazinul Fagurul de Aur</A>.
       </P>
     </>
   );
@@ -221,9 +221,9 @@ function DeCeCristalizeazaMierea() {
         Viteza cristalizării depinde de raportul glucoză/fructoză al fiecărui soi:
       </P>
       <UL>
-        <li><strong>Cristalizare lentă:</strong> <A href="/magazin/miere-salcam">mierea de salcâm</A>, bogată în fructoză, rămâne lichidă mult timp.</li>
-        <li><strong>Cristalizare medie spre rapidă:</strong> <A href="/magazin/miere-tei">mierea de tei</A> și mierea polifloră se zaharisesc mai repede, devenind cremoase.</li>
-        <li><strong>Cristalizare grosieră:</strong> <A href="/magazin/miere-munte">mierea de munte</A> formează adesea cristale mari, caracteristice.</li>
+        <li><strong>Cristalizare lentă:</strong> <A href="/miere/miere-salcam">mierea de salcâm</A>, bogată în fructoză, rămâne lichidă mult timp.</li>
+        <li><strong>Cristalizare medie spre rapidă:</strong> <A href="/miere/miere-tei">mierea de tei</A> și mierea polifloră se zaharisesc mai repede, devenind cremoase.</li>
+        <li><strong>Cristalizare grosieră:</strong> <A href="/miere/miere-munte">mierea de munte</A> formează adesea cristale mari, caracteristice.</li>
       </UL>
 
       <H2>Cristalizarea = autenticitate</H2>
@@ -247,7 +247,7 @@ function DeCeCristalizeazaMierea() {
       <P>
         Important: cristalizarea nu afectează valoarea nutritivă a mierii. Mulți preferă chiar mierea
         cristalizată, cremoasă, pentru tartine. Vezi întreaga gamă în{" "}
-        <A href="/magazin">magazinul nostru</A> și alege soiul potrivit gusturilor tale.
+        <A href="/miere">magazinul nostru</A> și alege soiul potrivit gusturilor tale.
       </P>
     </>
   );
@@ -287,7 +287,7 @@ function BeneficiiMiereDeSalcam() {
         sportivi și de oricine are nevoie de un plus de vitalitate fără zahăr rafinat.
       </P>
 
-      <ShopCTA href="/magazin/miere-salcam" label="Comandă miere de salcâm">
+      <ShopCTA href="/miere/miere-salcam" label="Comandă miere de salcâm">
         Mierea noastră de salcâm este recoltată manual și extrasă la rece, păstrând aroma delicată și toate
         enzimele naturale.
       </ShopCTA>
@@ -301,7 +301,7 @@ function BeneficiiMiereDeSalcam() {
         <A href="/blog/cum-recunosti-mierea-naturala">cum recunoști mierea naturală pură</A>.
       </P>
       <P>
-        Descoperă și celelalte sortimente în <A href="/magazin">magazinul Fagurul de Aur</A> sau află{" "}
+        Descoperă și celelalte sortimente în <A href="/miere">magazinul Fagurul de Aur</A> sau află{" "}
         <A href="/despre-noi">povestea stupinei noastre</A>.
       </P>
     </>
@@ -344,17 +344,17 @@ function PropolisCeEste() {
         <li>Începe cu o cantitate mică, pentru a verifica toleranța, mai ales la copii.</li>
       </OL>
 
-      <ShopCTA href="/magazin/tinctura-propolis" label="Vezi tinctura de propolis">
+      <ShopCTA href="/miere/tinctura-propolis" label="Vezi tinctura de propolis">
         Tinctura noastră de propolis provine din stupina Fagurul de Aur — produs apicol natural, fără aditivi.
       </ShopCTA>
 
       <H2>Propolis și miere — o combinație naturală</H2>
       <P>
         Propolisul se completează perfect cu mierea. Pentru gât iritat și imunitate, mulți combină tinctura
-        de propolis cu o linguriță de <A href="/magazin/miere-tei">miere de tei</A> sau{" "}
-        <A href="/magazin/miere-munte">miere de munte</A>. Vezi și ghidul despre{" "}
+        de propolis cu o linguriță de <A href="/miere/miere-tei">miere de tei</A> sau{" "}
+        <A href="/miere/miere-munte">miere de munte</A>. Vezi și ghidul despre{" "}
         <A href="/blog/miere-pentru-tuse-si-imunitate">miere pentru tuse și imunitate</A> și restul{" "}
-        <A href="/magazin">produselor apicole</A>.
+        <A href="/miere">produselor apicole</A>.
       </P>
     </>
   );
@@ -379,18 +379,18 @@ function MierePentruTuseImunitate() {
       <H2>Ce sortimente alegi</H2>
       <H3>Miere de tei — pentru gât iritat și somn</H3>
       <P>
-        <A href="/magazin/miere-tei">Mierea de tei</A> este renumită pentru efectul calmant și ușor sedativ.
+        <A href="/miere/miere-tei">Mierea de tei</A> este renumită pentru efectul calmant și ușor sedativ.
         O linguriță într-un ceai călduț (nu fierbinte) seara ajută la liniștirea tusei și a somnului.
       </P>
       <H3>Miere de munte — pentru imunitate</H3>
       <P>
-        <A href="/magazin/miere-munte">Mierea de munte</A> concentrează nectarul plantelor medicinale alpine
+        <A href="/miere/miere-munte">Mierea de munte</A> concentrează nectarul plantelor medicinale alpine
         și este bogată în compuși bioactivi, fiind apreciată ca tonic general și sprijin pentru apărarea
         organismului.
       </P>
       <H3>Miere polifloră — tonic zilnic</H3>
       <P>
-        <A href="/magazin/miere-poliflora">Mierea polifloră</A> oferă o paletă largă de antioxidanți și
+        <A href="/miere/miere-poliflora">Mierea polifloră</A> oferă o paletă largă de antioxidanți și
         enzime. Citește mai mult despre <A href="/blog/beneficii-miere-poliflora">beneficiile mierii poliflora</A>.
       </P>
       <H3>Propolis — apărare suplimentară</H3>
@@ -413,7 +413,7 @@ function MierePentruTuseImunitate() {
       </UL>
       <P>
         Descoperă toate sortimentele potrivite pentru sezonul rece în{" "}
-        <A href="/magazin">magazinul Fagurul de Aur</A>.
+        <A href="/miere">magazinul Fagurul de Aur</A>.
       </P>
     </>
   );

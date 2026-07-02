@@ -63,7 +63,7 @@ export function ProductDetail({ product }: { product: Product }) {
   const onTouchEnd = (e: React.TouchEvent) => {
     if (touchStartX.current === null) return;
     const dx = e.changedTouches[0].clientX - touchStartX.current;
-    if (Math.abs(dx) > 50) router.push(`/magazin/${dx < 0 ? nextProduct.slug : prevProduct.slug}`);
+    if (Math.abs(dx) > 50) router.push(`/miere/${dx < 0 ? nextProduct.slug : prevProduct.slug}`);
     touchStartX.current = null;
   };
 
@@ -101,14 +101,14 @@ export function ProductDetail({ product }: { product: Product }) {
 
             {/* Prev / next product arrows */}
             <Link
-              href={`/magazin/${prevProduct.slug}`}
+              href={`/miere/${prevProduct.slug}`}
               aria-label={`Produsul anterior: ${prevProduct.name}`}
               className="absolute left-2 sm:left-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-bg-elevated/80 backdrop-blur border border-gold-400/20 flex items-center justify-center text-text-secondary hover:text-gold-300 hover:border-gold-400/50 transition-colors"
             >
               <ChevronLeft size={20} />
             </Link>
             <Link
-              href={`/magazin/${nextProduct.slug}`}
+              href={`/miere/${nextProduct.slug}`}
               aria-label={`Produsul următor: ${nextProduct.name}`}
               className="absolute right-2 sm:right-3 top-1/2 -translate-y-1/2 w-10 h-10 rounded-full bg-bg-elevated/80 backdrop-blur border border-gold-400/20 flex items-center justify-center text-text-secondary hover:text-gold-300 hover:border-gold-400/50 transition-colors"
             >
@@ -118,10 +118,10 @@ export function ProductDetail({ product }: { product: Product }) {
 
           {/* Prev / next labels (desktop hint) */}
           <div className="hidden sm:flex w-full items-center justify-between text-xs text-text-muted">
-            <Link href={`/magazin/${prevProduct.slug}`} className="flex items-center gap-1 hover:text-gold-300 transition-colors max-w-[45%] truncate">
+            <Link href={`/miere/${prevProduct.slug}`} className="flex items-center gap-1 hover:text-gold-300 transition-colors max-w-[45%] truncate">
               <ChevronLeft size={13} className="shrink-0" /> {prevProduct.name}
             </Link>
-            <Link href={`/magazin/${nextProduct.slug}`} className="flex items-center gap-1 hover:text-gold-300 transition-colors max-w-[45%] truncate justify-end">
+            <Link href={`/miere/${nextProduct.slug}`} className="flex items-center gap-1 hover:text-gold-300 transition-colors max-w-[45%] truncate justify-end">
               {nextProduct.name} <ChevronRight size={13} className="shrink-0" />
             </Link>
           </div>

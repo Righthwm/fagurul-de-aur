@@ -8,7 +8,7 @@ export const metadata: Metadata = buildMetadata({
   title: "Magazin miere naturală — salcâm, tei, munte, polifloră",
   description:
     "Cumpără miere naturală online: salcâm, tei, munte, polifloră, mană și propolis. Miere pură românească, recoltată manual, extracție la rece. Comandă cu livrare 24–48h.",
-  path: "/magazin",
+  path: "/miere",
   keywords: [
     "cumpără miere naturală online",
     "magazin miere naturală",
@@ -26,13 +26,13 @@ function MagazinSchema() {
     itemListElement: products.map((p, i) => ({
       "@type": "ListItem",
       position: i + 1,
-      url: `${siteConfig.url}/magazin/${p.slug}`,
+      url: `${siteConfig.url}/miere/${p.slug}`,
       name: p.name,
     })),
   };
   const crumbs = breadcrumbSchema([
     { name: "Acasă", path: "/" },
-    { name: "Magazin", path: "/magazin" },
+    { name: "Magazin", path: "/miere" },
   ]);
   return (
     <script

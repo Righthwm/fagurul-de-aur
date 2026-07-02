@@ -38,7 +38,7 @@ export default async function PaymentReturnPage({
                 Mulțumim! Comanda <strong className="text-gold-300">{order?.orderNumber}</strong> a fost
                 plătită ({formatPrice(order!.total)}). Vei primi un email de confirmare.
               </p>
-              <Link href="/magazin" className="btn-primary">Înapoi la magazin</Link>
+              <Link href="/miere" className="btn-primary">Înapoi la magazin</Link>
             </>
           )}
 
@@ -75,7 +75,7 @@ export default async function PaymentReturnPage({
               </p>
               <div className="flex items-center justify-center gap-3">
                 <Link href="/checkout" className="btn-primary">Reîncearcă plata</Link>
-                <Link href="/magazin" className="btn-secondary">Magazin</Link>
+                <Link href="/miere" className="btn-secondary">Magazin</Link>
               </div>
             </>
           )}

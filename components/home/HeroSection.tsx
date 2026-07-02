@@ -141,7 +141,7 @@ export function HeroSection() {
             animate="visible"
             className="flex flex-col sm:flex-row items-center justify-center gap-4"
           >
-            <Link href="/magazin" className="btn-primary">
+            <Link href="/miere" className="btn-primary">
               Descoperă Mierea
             </Link>
             <Link href="/contact" className="btn-secondary">

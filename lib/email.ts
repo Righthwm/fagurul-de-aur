@@ -245,14 +245,14 @@ export async function sendNewsletterSignup(
       from: MAIL_FROM,
       to: email,
       subject: "Reducerea ta de 5% la Fagurul de Aur",
-      text: `Bun venit la Fagurul de Aur!\n\nCodul tău de 5% la prima comandă: ${NEWSLETTER_DISCOUNT_CODE}\n\nComandă miere pură din Gorj: https://faguruldeaur.ro/magazin`,
+      text: `Bun venit la Fagurul de Aur!\n\nCodul tău de 5% la prima comandă: ${NEWSLETTER_DISCOUNT_CODE}\n\nComandă miere pură din Gorj: https://faguruldeaur.ro/miere`,
       html: `
         <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">
           <h2 style="color:#B5700A">Bun venit la Fagurul de Aur 🐝</h2>
           <p>Mulțumim că te-ai abonat! Iată reducerea ta:</p>
           <p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f7f1e3;padding:14px 18px;border-radius:8px;display:inline-block">${NEWSLETTER_DISCOUNT_CODE}</p>
           <p>Folosește codul la prima comandă de miere artizanală, recoltată manual în Gorj.</p>
-          <p><a href="https://faguruldeaur.ro/magazin" style="color:#B5700A">Descoperă mierea →</a></p>
+          <p><a href="https://faguruldeaur.ro/miere" style="color:#B5700A">Descoperă mierea →</a></p>
         </div>`,
     });
     if (error) throw new Error(`${error.name} — ${error.message}`);
