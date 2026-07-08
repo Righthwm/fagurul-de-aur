@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { motion } from "framer-motion";
-import { Star, ShoppingBasket, Minus, Plus } from "lucide-react";
+import { Star, ShoppingBasket, CreditCard, Minus, Plus } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import { useCartStore } from "@/lib/cart";
@@ -12,6 +13,7 @@ import type { Product } from "@/types";
 
 export function ProductCard({ product }: { product: Product }) {
   const { addItem, openCart } = useCartStore();
+  const router = useRouter();
   const firstVariant = product.variants[0];
   const [quantity, setQuantity] = useState(1);
 
@@ -19,6 +21,11 @@ export function ProductCard({ product }: { product: Product }) {
     addItem(product, firstVariant, quantity);
     setQuantity(1);
     openCart();
+  };
+
+  const handleBuyNow = () => {
+    addItem(product, firstVariant, quantity);
+    router.push("/checkout");
   };
 
   return (
@@ -71,33 +78,43 @@ export function ProductCard({ product }: { product: Product }) {
         </div>
       </div>
 
-      <div className="px-5 pb-5 pt-3 flex gap-2">
-        <div className="flex items-center border border-gold-400/20 rounded-sm shrink-0">
+      <div className="px-5 pb-5 pt-3 flex flex-col gap-2">
+        <div className="flex gap-2">
+          <div className="flex items-center border border-gold-400/20 rounded-sm shrink-0">
+            <button
+              onClick={() => setQuantity(Math.max(1, quantity - 1))}
+              className="w-8 h-10 flex items-center justify-center text-text-muted hover:text-gold-300 transition-colors"
+              aria-label="Scade cantitate"
+            >
+              <Minus size={13} />
+            </button>
+            <span className="w-7 text-center text-sm text-text-primary font-body" aria-live="polite">
+              {quantity}
+            </span>
+            <button
+              onClick={() => setQuantity(quantity + 1)}
+              className="w-8 h-10 flex items-center justify-center text-text-muted hover:text-gold-300 transition-colors"
+              aria-label="Crește cantitate"
+            >
+              <Plus size={13} />
+            </button>
+          </div>
           <button
-            onClick={() => setQuantity(Math.max(1, quantity - 1))}
-            className="w-8 h-10 flex items-center justify-center text-text-muted hover:text-gold-300 transition-colors"
-            aria-label="Scade cantitate"
+            onClick={handleAdd}
+            className="btn-primary flex-1 text-sm gap-2"
+            aria-label={`Adaugă ${quantity} × ${product.name} în coș`}
           >
-            <Minus size={13} />
-          </button>
-          <span className="w-7 text-center text-sm text-text-primary font-body" aria-live="polite">
-            {quantity}
-          </span>
-          <button
-            onClick={() => setQuantity(quantity + 1)}
-            className="w-8 h-10 flex items-center justify-center text-text-muted hover:text-gold-300 transition-colors"
-            aria-label="Crește cantitate"
-          >
-            <Plus size={13} />
+            <ShoppingBasket size={15} />
+            Adaugă
           </button>
         </div>
         <button
-          onClick={handleAdd}
-          className="btn-primary flex-1 text-sm gap-2"
-          aria-label={`Adaugă ${quantity} × ${product.name} în coș`}
+          onClick={handleBuyNow}
+          className="btn-secondary w-full text-sm gap-2"
+          aria-label={`Cumpără acum ${quantity} × ${product.name}`}
         >
-          <ShoppingBasket size={15} />
-          Adaugă
+          <CreditCard size={15} />
+          Cumpără Acum
         </button>
       </div>
     </article>

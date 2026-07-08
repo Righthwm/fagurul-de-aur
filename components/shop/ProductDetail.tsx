@@ -4,7 +4,7 @@ import { useState, useRef } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
-import { Star, Minus, Plus, ShoppingBasket, MapPin, Leaf, Truck, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { Star, Minus, Plus, ShoppingBasket, CreditCard, MapPin, Leaf, Truck, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/Badge";
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import { useCartStore } from "@/lib/cart";
@@ -72,6 +72,11 @@ export function ProductDetail({ product }: { product: Product }) {
     setAddedAnim(true);
     setTimeout(() => setAddedAnim(false), 1200);
     openCart();
+  };
+
+  const handleBuyNow = () => {
+    addItem(product, selectedVariant, quantity);
+    router.push("/checkout");
   };
 
   const tabs = [
@@ -175,14 +180,28 @@ export function ProductDetail({ product }: { product: Product }) {
             </div>
           )}
 
-          {/* Price */}
-          <div className="flex items-baseline gap-2 mb-6">
-            <span className="font-heading text-gold-300 text-4xl">{formatPrice(selectedVariant.price)}</span>
-            <span className="text-text-muted text-sm">/ {selectedVariant.weight ?? selectedVariant.type}</span>
+          {/* Price — total updates live with the quantity so the customer sees
+              exactly what they'll pay before adding to cart. */}
+          <div className="mb-6">
+            <div className="flex items-baseline gap-2">
+              <span className="font-heading text-gold-300 text-4xl">
+                {formatPrice(selectedVariant.price * quantity)}
+              </span>
+              {quantity === 1 && (
+                <span className="text-text-muted text-sm">
+                  / {selectedVariant.weight ?? selectedVariant.type}
+                </span>
+              )}
+            </div>
+            {quantity > 1 && (
+              <p className="text-text-muted text-sm mt-1">
+                {quantity} × {formatPrice(selectedVariant.price)} / {selectedVariant.weight ?? selectedVariant.type}
+              </p>
+            )}
           </div>
 
           {/* Quantity + Add to cart */}
-          <div className="flex gap-3 mb-6">
+          <div className="flex gap-3 mb-3">
             <div className="flex items-center border border-gold-400/20 rounded-sm">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
@@ -220,6 +239,20 @@ export function ProductDetail({ product }: { product: Product }) {
               )}
             </motion.button>
           </div>
+
+          {/* Buy now → straight to checkout */}
+          <button onClick={handleBuyNow} className="btn-secondary w-full gap-2 mb-6">
+            <CreditCard size={16} />
+            Cumpără Acum
+          </button>
+
+          {/* Discount-code hint */}
+          <p className="text-text-muted text-sm leading-relaxed mb-6">
+            <span className="text-gold-300 font-medium">Ai un cod de reducere?</span> Îl poți
+            introduce după ce apeși Finalizare comandă din coșul de cumpărături, în pagina de
+            checkout unde introduci detaliile de plată, pentru a beneficia de reducere la toată
+            comanda.
+          </p>
 
           {/* Benefits strip */}
           <div className="flex flex-wrap gap-4 py-4 border-t border-b border-gold-400/8">
