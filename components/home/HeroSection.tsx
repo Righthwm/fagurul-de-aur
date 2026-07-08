@@ -27,6 +27,28 @@ export function HeroSection() {
         className="min-h-screen flex items-center overflow-hidden pt-16 lg:pt-20"
         style={{ background: "var(--hero-gradient)" }}
       >
+        {/* Video background: bees over the flower field */}
+        <video
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="auto"
+          poster="/images/hero-albine-poster.jpg"
+          className="absolute inset-0 w-full h-full object-cover blur-[2px] scale-[1.02] motion-reduce:hidden"
+          aria-hidden="true"
+        >
+          <source src="/videos/hero-albine.mp4" type="video/mp4" />
+        </video>
+        {/* Theme-tinted veil so the video sits behind the content, not in front of it */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: "var(--hero-gradient)", opacity: 0.8 }}
+          aria-hidden="true"
+        />
+        {/* Light theme only: soft dim so the bright video doesn't wash out the hero */}
+        <div className="hero-light-dim absolute inset-0 pointer-events-none" aria-hidden="true" />
+
         {/* Radial glow */}
         <div
           className="absolute inset-0 pointer-events-none"
@@ -49,8 +71,6 @@ export function HeroSection() {
           className="absolute left-0 sm:left-2 lg:left-8 bottom-0 w-[200px] sm:w-[280px] lg:w-[370px] pointer-events-none select-none"
           aria-hidden="true"
         >
-          {/* Warm glow grounding the hive into the scene */}
-          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gold-400/15 blur-3xl rounded-[50%]" />
           <Image
             src="/images/stup.png"
             alt="Stup de albine din stupina Fagurul de Aur, Gorj — apicultură pastorală"
@@ -70,8 +90,6 @@ export function HeroSection() {
           className="absolute right-0 sm:right-2 lg:right-6 bottom-0 w-[210px] sm:w-[290px] lg:w-[370px] pointer-events-none select-none"
           aria-hidden="true"
         >
-          {/* Warm glow grounding the bunch into the scene */}
-          <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gold-400/15 blur-3xl rounded-[50%]" />
           <Image
             src="/images/musetel.png"
             alt="Flori de mușețel, sursă de nectar pentru miere poliflora naturală"

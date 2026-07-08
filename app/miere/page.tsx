@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { Gift } from "lucide-react";
 import { ProductGrid } from "@/components/shop/ProductGrid";
+import { BannerVideo } from "@/components/ui/BannerVideo";
 import { HexPattern } from "@/components/ui/HexPattern";
 import { products } from "@/lib/products";
 import { buildMetadata, breadcrumbSchema, siteConfig, jsonLd } from "@/lib/seo";
@@ -49,17 +51,34 @@ export default function MagazinPage() {
 
       {/* Hero header */}
       <div className="relative bg-bg-secondary border-b border-gold-400/10 overflow-hidden">
+        <BannerVideo />
         <HexPattern opacity={0.025} />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <span className="block w-12 h-px bg-gold-400 mx-auto mb-5" aria-hidden="true" />
           <h1 className="font-heading text-text-primary">Magazin miere naturală</h1>
           <p className="text-text-secondary mt-4 max-w-2xl mx-auto">
             Toată mierea și produsele apicole Fagurul de Aur, recoltate manual din România. Miere
-            crudă, neîncălzită și fără aditivi — de la <strong className="text-text-primary">miere de
-            salcâm</strong> și <strong className="text-text-primary">miere de tei</strong>, la{" "}
-            <strong className="text-text-primary">miere de munte</strong>,{" "}
-            <strong className="text-text-primary">polifloră</strong> și propolis.
+            crudă, neîncălzită și fără aditivi — <strong className="text-text-primary">miere de
+            salcâm</strong>, <strong className="text-text-primary">de tei</strong>,{" "}
+            <strong className="text-text-primary">polifloră</strong>,{" "}
+            <strong className="text-text-primary">de munte</strong>,{" "}
+            <strong className="text-text-primary">de mană</strong> și{" "}
+            <strong className="text-text-primary">de rapiță</strong>, plus{" "}
+            <strong className="text-text-primary">tinctură de propolis</strong>.
           </p>
+
+          {/* Free-jar promotion callout */}
+          <div className="mt-7 flex justify-center">
+            <div className="inline-flex items-center gap-3 rounded-lg border border-gold-400/40 bg-gold-400/10 px-5 py-3 backdrop-blur-sm max-w-2xl text-left">
+              <Gift className="text-gold-300 shrink-0" size={22} aria-hidden="true" />
+              <p className="text-sm sm:text-base text-text-primary leading-snug">
+                <span className="font-semibold text-gold-300">Profită de cea mai bună ofertă:</span>{" "}
+                la fiecare 10 borcane de miere adăugate în coș, primești{" "}
+                <span className="font-semibold text-gold-300">GRATUIT</span> câte un borcan de miere
+                la alegere!
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -24,6 +24,7 @@ function InstagramIcon() {
     </svg>
   );
 }
+import { BannerVideo } from "@/components/ui/BannerVideo";
 import { HexPattern } from "@/components/ui/HexPattern";
 import { HoneyDropLoader } from "@/components/ui/HoneyDropLoader";
 
@@ -67,6 +68,7 @@ export default function ContactPage() {
     <div className="bg-bg-primary pt-20">
       {/* Header */}
       <div className="relative bg-bg-secondary border-b border-gold-400/10 overflow-hidden">
+        <BannerVideo />
         <HexPattern opacity={0.025} />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 text-center">
           <span className="gold-line" />

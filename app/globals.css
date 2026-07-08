@@ -121,7 +121,17 @@ html.light .card:hover {
    theme, warm + lighten them so they sit closer to the cream palette
    instead of reading as dark, cool-toned cut-outs with a harsh shadow. */
 .photo-blend {
-  filter: drop-shadow(0 14px 34px rgba(0, 0, 0, 0.55));
+  filter: drop-shadow(0 8px 18px rgba(0, 0, 0, 0.28));
+}
+
+/* Hero video dim — only on the light theme, where the bright video would
+   otherwise wash out the hero. Kept well short of the dark theme's mood. */
+.hero-light-dim {
+  opacity: 0;
+  background: linear-gradient(180deg, rgba(38, 24, 6, 0.34) 0%, rgba(38, 24, 6, 0.24) 100%);
+}
+html.light .hero-light-dim {
+  opacity: 1;
 }
 html.light .photo-blend {
   opacity: 0.94;
