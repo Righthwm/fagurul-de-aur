@@ -37,7 +37,7 @@ const benefits = [
   {
     icon: "family",
     title: "O familie, nu o fabrică",
-    desc: "Din 2009, aceeași familie de apicultori, aceleași albine, aceeași grijă în fiecare borcan.",
+    desc: "Din 2001, aceeași familie de apicultori, aceleași albine, aceeași grijă în fiecare borcan.",
   },
 ];
 

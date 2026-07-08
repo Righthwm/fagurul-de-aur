@@ -8,7 +8,7 @@ import { HexPattern } from "@/components/ui/HexPattern";
 import type { TimelineEvent } from "@/types";
 
 const timeline: TimelineEvent[] = [
-  { year: "2009", title: "Prima familie de albine", description: "Totul a început cu o singură familie de albine și o pasiune care nu mai putea fi ignorată. Primul cules, prima miere — nerafinată, naturală, perfectă." },
+  { year: "2001", title: "Prima familie de albine", description: "Totul a început cu o singură familie de albine și o pasiune care nu mai putea fi ignorată. Primul cules, prima miere — nerafinată, naturală, perfectă." },
   { year: "2012", title: "Primii 50 de stupi", description: "Stupina a crescut organic, respectând ritmul natural al albinelor." },
   { year: "2020", title: "Puritate Garantată", description: "După ani de practici naturale riguroase, garantăm puritatea fiecărui borcan. Niciun antibiotic, niciun tratament chimic — niciodată." },
   { year: "2024", title: "120 de familii de albine", description: "Stupina a atins o scală importantă, păstrând în același timp calitatea artizanală. Am investit în echipamente de extracție la rece și în ambalaje eco." },
@@ -92,7 +92,7 @@ export default function DespreNoiPage() {
                 <span className="text-gradient-gold">suflet</span>
               </h1>
               <p className="text-text-secondary text-lg leading-relaxed mb-6">
-                Totul a început în 2009, pe dealurile Gorjului, cu o singură familie de albine și
+                Totul a început în 2001, pe dealurile Gorjului, cu o singură familie de albine și
                 încăpățânarea de a face mierea altfel decât o găseai la raft. Fără grabă, fără
                 chimicale, fără scurtături. An după an, stupina a crescut — dar mâinile care umplu
                 fiecare borcan au rămas aceleași. Mutăm stupii după înflorire, de la salcâm la tei
@@ -106,7 +106,7 @@ export default function DespreNoiPage() {
                   „Albinele nu produc miere pentru noi. Noi avem privilegiul de a fi parteneri
                   ai unui proces magic, vechi de milioane de ani.”
                 </p>
-                <cite className="text-text-muted text-sm mt-2 block">— Ion Popescu, fondator Fagurul de Aur</cite>
+                <cite className="text-text-muted text-sm mt-2 block">— Marin Popescu, fondator Fagurul de Aur</cite>
               </blockquote>
 
               <Link href="/contact" className="btn-secondary">

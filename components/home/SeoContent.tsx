@@ -44,7 +44,7 @@ export function SeoContent() {
           <p>
             <strong className="text-text-primary">Fagurul de Aur</strong> este o stupină de familie din
             Gorj, unde producem <strong className="text-text-primary">miere naturală pură, 100% curată</strong>,
-            din 2009. Albinele noastre culeg nectar din salcâm, tei, flori de munte și pajiști poliflore,
+            din 2001. Albinele noastre culeg nectar din salcâm, tei, flori de munte și pajiști poliflore,
             iar noi recoltăm mierea <strong className="text-text-primary">manual</strong>, prin extracție la
             rece din fagure. Așa obținem <strong className="text-text-primary">miere crudă (raw honey)</strong>,
             neîncălzită și neprelucrată, în care enzimele, polenul, antioxidanții și flavonoidele rămân vii.
