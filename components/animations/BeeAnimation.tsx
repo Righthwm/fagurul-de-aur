@@ -79,18 +79,19 @@ function BeeSprite({ id, depth, interactive }: { id: number; depth: number; inte
           d="M3 1 Q3.4 5.2 -2 5.6 L-12.5 3 Q-15.5 1.2 -12.5 -1 L-2 -3.6 Q3.4 -3.2 3 1 Z"
           fill="url(#beeAbd)"
         />
-        <path d="M-1 -3.4 Q-2.2 1 -1 5.4" stroke="#241405" strokeWidth="2.1" fill="none" />
-        <path d="M-5 -3.1 Q-6 1 -5 4.9" stroke="#241405" strokeWidth="2" fill="none" />
-        <path d="M-9 -2.2 Q-9.8 1 -9 4" stroke="#241405" strokeWidth="1.7" fill="none" />
+        <path d="M-1 -3.4 Q-2.2 1 -1 5.4" stroke="#201204" strokeWidth="2.5" fill="none" />
+        <path d="M-4.6 -3.1 Q-5.6 1 -4.6 4.9" stroke="#201204" strokeWidth="2.3" fill="none" />
+        <path d="M-8 -2.6 Q-8.8 1 -8 4.4" stroke="#201204" strokeWidth="2" fill="none" />
+        <path d="M-11 -1.7 Q-11.7 1 -11 3.4" stroke="#201204" strokeWidth="1.6" fill="none" />
         {/* Dark pointed tip */}
-        <path d="M-12.5 3 Q-15.6 1.1 -12.5 -1 Q-13.8 1 -12.5 3 Z" fill="#1C1404" />
+        <path d="M-12.5 3 Q-15.6 1.1 -12.5 -1 Q-13.8 1 -12.5 3 Z" fill="#180F03" />
         {/* Sheen */}
-        <ellipse cx="-4.5" cy="-1.4" rx="6" ry="1.4" fill="#FFE9A0" opacity="0.3" />
+        <ellipse cx="-3.5" cy="-1.6" rx="5" ry="1.2" fill="#FFF3D0" opacity="0.28" />
 
         {/* THORAX — fuzzy amber */}
-        <circle cx="2.5" cy="0.5" r="4.6" fill="#6E4E12" />
+        <circle cx="2.5" cy="0.5" r="4.6" fill="#3E2A0E" />
         <circle cx="2.5" cy="0" r="4.2" fill="url(#beeThorax)" />
-        <g stroke="#CAA23A" strokeWidth="0.5" opacity="0.7" strokeLinecap="round">
+        <g stroke="#D9BC80" strokeWidth="0.5" opacity="0.75" strokeLinecap="round">
           <path d="M-1.5 -3 l-1 -1" />
           <path d="M2 -4.2 l0 -1.3" />
           <path d="M5.5 -3 l1 -1" />
@@ -296,20 +297,22 @@ export function BeeAnimation() {
       {/* Back layer — behind the honey jar (jar is z-10) */}
       <svg ref={backRef} {...svgProps} className="absolute inset-0 w-full h-full z-[5]">
         <defs>
+          {/* Palette sampled from the hero video bees: creamy tan bands on
+              dark chocolate, pale fuzzy thorax, glassy white wings. */}
           <linearGradient id="beeAbd" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#F2C24A" />
-            <stop offset="55%" stopColor="#D89A28" />
-            <stop offset="100%" stopColor="#A06A12" />
+            <stop offset="0%" stopColor="#E6C47E" />
+            <stop offset="55%" stopColor="#C89B4E" />
+            <stop offset="100%" stopColor="#8F642A" />
           </linearGradient>
           <radialGradient id="beeThorax" cx="45%" cy="38%" r="65%">
-            <stop offset="0%" stopColor="#E8B53C" />
-            <stop offset="70%" stopColor="#B0801C" />
-            <stop offset="100%" stopColor="#7A5410" />
+            <stop offset="0%" stopColor="#D9B878" />
+            <stop offset="70%" stopColor="#9A7434" />
+            <stop offset="100%" stopColor="#573D14" />
           </radialGradient>
           <radialGradient id="wingGrad" cx="60%" cy="35%" r="75%">
-            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.6" />
-            <stop offset="65%" stopColor="#EAE2D2" stopOpacity="0.32" />
-            <stop offset="100%" stopColor="#C8C0B0" stopOpacity="0.1" />
+            <stop offset="0%" stopColor="#FFFFFF" stopOpacity="0.78" />
+            <stop offset="65%" stopColor="#F0F2F0" stopOpacity="0.4" />
+            <stop offset="100%" stopColor="#D8D8D0" stopOpacity="0.12" />
           </radialGradient>
         </defs>
         {DEPTHS.map((depth, id) =>
