@@ -1,7 +1,5 @@
 import { products } from "@/lib/products";
-import { FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
-import { estimateTariff, FanCourierUnavailableError } from "@/lib/fancourier";
-import { provisionalTariff } from "@/lib/shipping-config";
+import { shippingFee } from "@/lib/constants";
 
 /** Fallback weight (kg) for a cart line whose variant has no configured weight. */
 const DEFAULT_ITEM_WEIGHT_KG = 1;
@@ -30,17 +28,9 @@ export function cartSubtotal(items: CartLineInput[]): number {
 }
 
 export interface ShippingResult {
-  /** Qualifies for free shipping (subtotal >= threshold). */
-  free: boolean;
-  /** false => couldn't price it at all ("se calculează la livrare"). */
-  available: boolean;
-  /**
-   * true => the cost comes from the provisional table (lib/shipping-config.ts),
-   * not the live Fan Courier API. Drives the "preț estimativ" note in checkout.
-   */
-  estimated: boolean;
-  /** Cost in lei: 0 when free, a number when priced, null when unavailable. */
-  cost: number | null;
+  /** Flat delivery fee in lei: 30 for urban localities, 50 for rural ones. */
+  cost: number;
+  /** Gross parcel weight (kg), informative only — the fee no longer depends on it. */
   weightKg: number;
 }
 
@@ -55,34 +45,11 @@ export interface EstimateInput {
 
 /**
  * Authoritative shipping calculation, shared by the estimate endpoint and the
- * checkout route. Free above the threshold; otherwise the Fan Courier tariff,
- * or `available: false` when the courier API isn't configured/reachable.
+ * checkout route. A flat two-tier fee: 30 lei to a city (oraș), 50 lei to a
+ * village (sat), based on the delivery locality.
  */
 export async function estimateShipping(input: EstimateInput): Promise<ShippingResult> {
   const weightKg = packageWeightKg(input.items);
-  const subtotal = cartSubtotal(input.items);
-
-  if (subtotal >= FREE_SHIPPING_THRESHOLD) {
-    return { free: true, available: true, estimated: false, cost: 0, weightKg };
-  }
-
-  try {
-    const cost = await estimateTariff({
-      county: input.county,
-      locality: input.locality,
-      localityType: input.localityType,
-      weightKg,
-      cashOnDelivery: input.cashOnDelivery,
-      declaredValue: subtotal,
-    });
-    return { free: false, available: true, estimated: false, cost, weightKg };
-  } catch (error) {
-    if (error instanceof FanCourierUnavailableError) {
-      // No live courier API yet: fall back to the provisional table so the
-      // customer still sees a concrete (estimated) shipping cost.
-      const cost = provisionalTariff(weightKg, input.localityType);
-      return { free: false, available: true, estimated: true, cost, weightKg };
-    }
-    throw error;
-  }
+  const cost = shippingFee(input.localityType);
+  return { cost, weightKg };
 }

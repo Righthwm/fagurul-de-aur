@@ -17,7 +17,7 @@ import {
   ShoppingBasket,
   AlertCircle,
 } from "lucide-react";
-import { useCartStore, FREE_SHIPPING_THRESHOLD } from "@/lib/cart";
+import { useCartStore } from "@/lib/cart";
 import { overclaimedFreeJars } from "@/lib/promo";
 import { couponDiscount } from "@/lib/coupons";
 import { formatPrice } from "@/lib/utils";
@@ -134,12 +134,11 @@ export default function CheckoutPage() {
   // localStorage on the client, so reading it during SSR / first render would
   // mismatch. Until mounted, render the same neutral values the server does.
   const subtotal = mounted ? totalPrice() : 0;
-  const freeShipping = subtotal >= FREE_SHIPPING_THRESHOLD;
 
-  // ---- Fan Courier shipping estimate ----
+  // ---- Delivery fee (flat: 30 lei oraș / 50 lei sat, by locality) ----
   type Estimate =
-    | { status: "idle" | "loading" | "free" | "unavailable" }
-    | { status: "available"; cost: number; estimated: boolean };
+    | { status: "idle" | "loading" | "unavailable" }
+    | { status: "available"; cost: number };
   const [localities, setLocalities] = useState<string[]>([]);
   const [estimate, setEstimate] = useState<Estimate>({ status: "idle" });
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -168,13 +167,9 @@ export default function CheckoutPage() {
     };
   }, [county, setValue]);
 
-  // Address + cart → debounced shipping estimate. Free shipping short-circuits.
+  // Address + cart → debounced shipping estimate.
   useEffect(() => {
     if (!mounted || items.length === 0) return;
-    if (freeShipping) {
-      setEstimate({ status: "free" });
-      return;
-    }
     if (!county || !locality) {
       setEstimate({ status: "idle" });
       return;
@@ -197,16 +192,14 @@ export default function CheckoutPage() {
         }),
       })
         .then((r) => r.json())
-        .then((d: { free: boolean; available: boolean; estimated: boolean; cost: number | null }) => {
-          if (d.free) setEstimate({ status: "free" });
-          else if (d.available && typeof d.cost === "number")
-            setEstimate({ status: "available", cost: d.cost, estimated: !!d.estimated });
+        .then((d: { cost: number | null }) => {
+          if (typeof d.cost === "number") setEstimate({ status: "available", cost: d.cost });
           else setEstimate({ status: "unavailable" });
         })
         .catch(() => setEstimate({ status: "unavailable" }));
     }, 500);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mounted, county, locality, paymentMethod, freeShipping, itemsSig]);
+  }, [mounted, county, locality, paymentMethod, itemsSig]);
 
   const shippingCost = estimate.status === "available" ? estimate.cost : 0;
   const discount = couponDiscount(subtotal, appliedCoupon);
@@ -619,31 +612,19 @@ export default function CheckoutPage() {
                   <dd className="text-text-primary">{formatPrice(subtotal)}</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-text-muted">Livrare (Fan Courier)</dt>
+                  <dt className="text-text-muted">Livrare</dt>
                   <dd>
-                    {freeShipping ? (
-                      <span className="text-success">Gratuită</span>
-                    ) : estimate.status === "available" ? (
+                    {estimate.status === "available" ? (
                       <span className="text-text-primary">{formatPrice(estimate.cost)}</span>
                     ) : estimate.status === "loading" ? (
                       <span className="text-text-muted">Se calculează…</span>
                     ) : estimate.status === "unavailable" ? (
                       <span className="text-text-primary">Se calculează la livrare</span>
                     ) : (
-                      <span className="text-text-muted">Completează adresa</span>
+                      <span className="text-text-muted">Se calculează după introducerea adresei</span>
                     )}
                   </dd>
                 </div>
-                {!freeShipping && estimate.status === "available" && estimate.estimated && (
-                  <p className="text-xs text-text-muted pt-1">
-                    Preț estimativ — poate varia ușor față de costul final de livrare.
-                  </p>
-                )}
-                {!freeShipping && (
-                  <p className="text-xs text-text-muted pt-1">
-                    Livrare gratuită la comenzi peste {FREE_SHIPPING_THRESHOLD} lei.
-                  </p>
-                )}
                 {discount > 0 && (
                   <div className="flex justify-between">
                     <dt className="text-text-muted">Reducere ({appliedCoupon})</dt>

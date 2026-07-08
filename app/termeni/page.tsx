@@ -184,8 +184,7 @@ export default function TermeniPage() {
                 comenzii. Termenul de livrare maxim este de 30 de zile calendaristice, conform legii.
               </p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>Cost livrare: calculat în funcție de greutatea coletului și localitatea de livrare, afișat la finalizarea comenzii (înainte de confirmarea plății);</li>
-                <li>Livrare <strong className="text-text-primary">gratuită</strong> pentru comenzile de peste <strong className="text-text-primary">300 lei</strong>;</li>
+                <li>Cost livrare: <strong className="text-text-primary">30 lei</strong> pentru livrarea la oraș și <strong className="text-text-primary">50 lei</strong> pentru livrarea la sat, afișat la finalizarea comenzii (înainte de confirmarea plății);</li>
                 <li>Produsele sunt ambalate protector (carton, separatoare), iar pe timp de caniculă se folosesc soluții suplimentare de protecție termică.</li>
               </ul>
               <p>

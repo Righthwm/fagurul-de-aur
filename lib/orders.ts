@@ -53,7 +53,6 @@ export async function couponUsageCount(code: string): Promise<number> {
 export interface PersistedOrder {
   orderId: string;
   totals: { subtotal: number; shipping: number; discount: number; total: number };
-  shippingTbd: boolean;
   notes: string | null;
   /** Items actually ordered — after the free-jar entitlement guard. */
   items: CheckoutInput["items"];
@@ -86,7 +85,7 @@ export async function persistOrder(input: CheckoutInput, paymentStatus: string):
     localityType: localityTypeOf(input.shippingAddress.county, input.shippingAddress.city),
     cashOnDelivery: input.paymentMethod === "ramburs" ? subtotal : 0,
   });
-  const shipping = shippingResult.free ? 0 : shippingResult.cost ?? 0;
+  const shipping = shippingResult.cost;
   // Coupon validated + applied server-side so the total can't be tampered with.
   const coupon = getCoupon(input.couponCode); // null if missing/expired
   let appliedCode: string | null = coupon?.code ?? null;
@@ -97,10 +96,8 @@ export async function persistOrder(input: CheckoutInput, paymentStatus: string):
     discount = 0;
   }
   const total = Math.max(0, subtotal - discount + shipping);
-  const shippingTbd = !shippingResult.free && !shippingResult.available;
 
-  const notes =
-    (shippingTbd ? "[Transport: se calculează la livrare] " : "") + (input.notes?.trim() || "") || null;
+  const notes = input.notes?.trim() || null;
 
   await prisma.order.create({
     data: {
@@ -126,5 +123,5 @@ export async function persistOrder(input: CheckoutInput, paymentStatus: string):
     },
   });
 
-  return { orderId, totals: { subtotal, shipping, discount, total }, shippingTbd, notes, items: orderedItems };
+  return { orderId, totals: { subtotal, shipping, discount, total }, notes, items: orderedItems };
 }

@@ -13,15 +13,8 @@ import {
 } from "@/lib/promo";
 
 // Re-exported from the framework-neutral constants module (this file is
-// "use client"; server code must read the threshold from lib/constants).
-export { SHIPPING_COST, FREE_SHIPPING_THRESHOLD } from "@/lib/constants";
-
-import { SHIPPING_COST as FLAT, FREE_SHIPPING_THRESHOLD as THRESHOLD } from "@/lib/constants";
-
-/** Shipping fee for a given subtotal — 0 when it qualifies for free shipping. */
-export function shippingFor(subtotal: number): number {
-  return subtotal >= THRESHOLD ? 0 : FLAT;
-}
+// "use client"; server code must read shipping constants from lib/constants).
+export { SHIPPING_URBAN, SHIPPING_RURAL } from "@/lib/constants";
 
 /**
  * Reconcile a persisted cart against the current catalog so it always reflects

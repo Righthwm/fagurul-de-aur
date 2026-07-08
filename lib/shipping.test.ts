@@ -27,27 +27,17 @@ describe("cartSubtotal", () => {
 describe("estimateShipping", () => {
   const addr = { county: "Cluj", locality: "Cluj-Napoca", localityType: "urban" as const, cashOnDelivery: 0 };
 
-  it("is free at or above the 300 lei threshold", async () => {
-    const bigOrder = [{ productId: "miere-salcam", variantPrice: 200, quantity: 2 }]; // 400 lei
+  it("charges a flat 30 lei for urban delivery, regardless of weight or subtotal", async () => {
+    const bigOrder = [{ productId: "miere-salcam", variantPrice: 200, quantity: 2 }]; // 400 lei, 2.8 kg
     const result = await estimateShipping({ items: bigOrder, ...addr });
-    expect(result.free).toBe(true);
-    expect(result.cost).toBe(0);
+    expect(result.cost).toBe(30);
   });
 
-  it("falls back to the provisional table below threshold when Fan Courier is not configured", async () => {
-    const result = await estimateShipping({ items: [salcam, propolis], ...addr }); // 105 lei, 3.0 kg
-    expect(result.free).toBe(false);
-    expect(result.available).toBe(true);
-    expect(result.estimated).toBe(true);
-    expect(result.cost).toBe(22); // 3 kg urban bracket
-    expect(result.weightKg).toBe(3.0);
-  });
-
-  it("adds the flat rural surcharge to the provisional estimate", async () => {
+  it("charges a flat 50 lei for rural delivery", async () => {
     const rural = { county: "Gorj", locality: "Sterpoaia", localityType: "rural" as const, cashOnDelivery: 0 };
-    const result = await estimateShipping({ items: [salcam, propolis], ...rural }); // 3.0 kg
-    expect(result.estimated).toBe(true);
-    expect(result.cost).toBe(22 + SHIPPING_CONFIG.ruralSurchargeLei); // 3 kg base + flat rural fee
+    const result = await estimateShipping({ items: [salcam, propolis], ...rural });
+    expect(result.cost).toBe(50);
+    expect(result.weightKg).toBe(3.0);
   });
 });
 

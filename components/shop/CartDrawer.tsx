@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
 import { X, Plus, Minus, Trash2, ShoppingBasket, Gift } from "lucide-react";
 import { useRouter } from "next/navigation";
-import { useCartStore, shippingFor, FREE_SHIPPING_THRESHOLD } from "@/lib/cart";
+import { useCartStore } from "@/lib/cart";
 import { overclaimedFreeJars, unclaimedFreeJars } from "@/lib/promo";
 import { formatPrice } from "@/lib/utils";
 
@@ -22,10 +22,10 @@ export function CartDrawer() {
   } = useCartStore();
 
   const subtotal = totalPrice();
-  const shipping = shippingFor(subtotal);
-  const total = subtotal + shipping;
+  // Delivery is 30 lei to a city / 50 lei to a village — but the locality isn't
+  // known until checkout, so the drawer shows the range and totals products only.
+  const total = subtotal;
   const count = totalItems();
-  const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - subtotal;
   const router = useRouter();
 
   // Split paid lines from earned free jars. The last `overclaimed` bonus lines
@@ -274,17 +274,12 @@ export function CartDrawer() {
                     <span className="text-text-muted font-body">Subtotal</span>
                     <span className="text-text-secondary">{formatPrice(subtotal)}</span>
                   </div>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-text-muted font-body">Transport</span>
-                    <span className={shipping === 0 ? "text-gold-300" : "text-text-secondary"}>
-                      {shipping === 0 ? "Gratuit" : formatPrice(shipping)}
+                  <div className="flex items-center justify-between gap-4 text-sm">
+                    <span className="text-text-muted font-body shrink-0">Transport</span>
+                    <span className="text-text-secondary text-xs text-right">
+                      Se calculează la finalizarea comenzii
                     </span>
                   </div>
-                  {remainingForFreeShipping > 0 && (
-                    <p className="text-text-muted text-xs pt-1">
-                      Mai adaugă {formatPrice(remainingForFreeShipping)} pentru transport gratuit.
-                    </p>
-                  )}
                 </div>
                 <div className="flex items-center justify-between border-t border-gold-400/10 pt-3">
                   <span className="text-text-secondary font-body text-sm">Total</span>
