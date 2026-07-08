@@ -7,6 +7,7 @@ import { InlineScript } from "@/components/ui/InlineScript";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/shop/CartDrawer";
 import { FreeJarPopup } from "@/components/shop/FreeJarPopup";
+import { CookieConsent } from "@/components/layout/CookieConsent";
 import {
   siteConfig,
   siteKeywords,
@@ -95,6 +96,7 @@ export default function RootLayout({
           <Footer />
           <CartDrawer />
           <FreeJarPopup />
+          <CookieConsent />
         </SessionProvider>
       </body>
     </html>
