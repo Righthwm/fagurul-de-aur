@@ -13,7 +13,9 @@ interface Pt {
 
 // Fixed depths (0 = far/small/blurry, 1 = near) keep the rendered markup
 // identical on server and client; all motion randomness lives in the effect.
-const DEPTHS = [0.2, 0.85, 0.5, 0.95, 0.32, 0.7, 0.14, 0.62, 0.9];
+const DEPTHS = [
+  0.2, 0.85, 0.5, 0.95, 0.32, 0.7, 0.14, 0.62, 0.9, 0.4, 0.78, 0.25, 0.55, 0.68, 0.38,
+];
 
 // The nearest bees fly on a layer ABOVE the jar (passing in front of it);
 // the rest stay behind it. Membership decides which <svg> layer renders a bee.
@@ -127,11 +129,16 @@ export function BeeAnimation() {
   const frontRef = useRef<SVGSVGElement>(null);
   const [resizeKey, setResizeKey] = useState(0);
 
-  // Rebuild flight paths when the layout changes (breakpoint / window resize),
-  // so spawn/target stay glued to the hive and flowers.
+  // Rebuild flight paths only when the WIDTH changes (breakpoint / real resize),
+  // so spawn/target stay glued to the hive and flowers. Height-only changes are
+  // ignored: on mobile, scrolling shows/hides the address bar and fires resize,
+  // which would otherwise rebuild everything and snap the bees back to the hive.
   useEffect(() => {
+    let lastWidth = window.innerWidth;
     let t: ReturnType<typeof setTimeout>;
     const onResize = () => {
+      if (window.innerWidth === lastWidth) return; // height-only (mobile scroll)
+      lastWidth = window.innerWidth;
       clearTimeout(t);
       t = setTimeout(() => setResizeKey((k) => k + 1), 250);
     };
@@ -187,52 +194,88 @@ export function BeeAnimation() {
         if (!outer || !inner || !wings) return;
 
         const scale = 0.5 + depth * 0.7;
-        // Staggered emission so they stream out of the hive one after another
-        const delay = id * 0.7 + Math.random() * 0.6;
-        const duration = 13 - depth * 4 + Math.random() * 4; // far bees slower (parallax)
+        // Roughly half the bees stream out of the hive on load (staggered, quick);
+        // the rest start already scattered mid-journey (see tl.progress below), so
+        // at any moment some are flying out, some back, and some resting — never a
+        // single synchronized wave.
+        const emerges = Math.random() < 0.5;
+        const delay = emerges ? id * 0.18 + Math.random() * 0.3 : 0;
+        // Wide, independent speeds so bees never travel as a group.
+        const outbound = 6 - depth * 2 + Math.random() * 6; // hive → flower
+        const inbound = 6 - depth * 2 + Math.random() * 6; // flower → hive
 
-        // Spawn at the hive's landing board (lower-centre of the hive photo)…
-        const start = toVB(
-          hr.left + hr.width * (0.4 + Math.random() * 0.2),
-          hr.top + hr.height * (0.74 + Math.random() * 0.12)
-        );
-        // …rising first toward the jar (apex, high in the centre)…
-        const apex = jrect
-          ? toVB(
-              jrect.left + jrect.width * (0.1 + Math.random() * 0.8),
-              jrect.top + jrect.height * (Math.random() * 0.45)
-            )
-          : toVB(window.innerWidth * 0.5 + (Math.random() - 0.5) * 220, window.innerHeight * 0.28);
-        // …then descending onto a random bloom within the flower cluster.
-        const target = toVB(
-          fr.left + fr.width * (0.2 + Math.random() * 0.55),
-          fr.top + fr.height * (0.12 + Math.random() * 0.45)
-        );
-        const path = makePath(start, apex, target, vb.y + 30, vb.y + vb.height - 30);
+        const minY = vb.y + 30;
+        const maxY = vb.y + vb.height - 30;
+
+        // A point on the hive's landing board (lower-centre of the hive photo).
+        const hivePoint = () =>
+          toVB(
+            hr.left + hr.width * (0.4 + Math.random() * 0.2),
+            hr.top + hr.height * (0.74 + Math.random() * 0.12)
+          );
+        // A high apex near the jar, so the arc rises before it descends.
+        const apexPoint = () =>
+          jrect
+            ? toVB(
+                jrect.left + jrect.width * (0.1 + Math.random() * 0.8),
+                jrect.top + jrect.height * (Math.random() * 0.45)
+              )
+            : toVB(window.innerWidth * 0.5 + (Math.random() - 0.5) * 220, window.innerHeight * 0.28);
+        // A random bloom within the flower cluster.
+        const flowerPoint = () =>
+          toVB(
+            fr.left + fr.width * (0.2 + Math.random() * 0.55),
+            fr.top + fr.height * (0.12 + Math.random() * 0.45)
+          );
+
+        const start = hivePoint();
+        const target = flowerPoint();
+        // Separate apexes give the outbound and return arcs distinct shapes.
+        const forwardPath = makePath(start, apexPoint(), target, minY, maxY);
+        const returnPath = makePath(target, apexPoint(), start, minY, maxY);
 
         gsap.set(outer, { x: start.x, y: start.y, scale, opacity: 0 });
-        const vis = 0.4 + depth * 0.6;
+        const vis = 0.5 + depth * 0.5;
+        // Varied dwell: some just tap the flower, some linger (appear to rest).
+        const hoverN = 2 + Math.floor(Math.random() * 6);
 
+        // Continuous round trip: fade in once, fly to the flowers, hover, then
+        // fly back to the hive and repeat — the bee never fades out or teleports.
         const tl = gsap.timeline({
           repeat: -1,
           delay,
-          repeatDelay: 1.5 + Math.random() * 3,
+          repeatDelay: 0.3 + Math.random() * 3, // varied rest at the hive
         });
-        tl.to(outer, { opacity: vis, duration: 0.6, ease: "power1.out" }, 0)
+        tl.to(outer, { opacity: vis, duration: 0.7, ease: "power1.out" }, 0)
           .to(
             outer,
             {
-              motionPath: { path, curviness: 1.45, autoRotate: true },
-              duration,
+              motionPath: { path: forwardPath, curviness: 1.45, autoRotate: true },
+              duration: outbound,
               ease: "power1.inOut",
             },
             0
           )
-          // Settle onto the flower: level out and hover a moment
+          // Settle onto the flower: level out and hover a moment.
           .to(outer, { rotation: 0, duration: 0.4, ease: "power2.out" })
-          .to(outer, { y: "-=5", duration: 0.5, yoyo: true, repeat: 3, ease: "sine.inOut" })
-          .to(outer, { opacity: 0, duration: 0.7 })
-          .set(outer, { x: start.x, y: start.y, rotation: 0 });
+          .to(outer, { y: "-=5", duration: 0.5, yoyo: true, repeat: hoverN, ease: "sine.inOut" })
+          // Turn around and head back to the hive. We MIRROR horizontally to
+          // face left (scaleX < 0) instead of letting autoRotate spin the sprite
+          // ~180°, which would flip it belly-up (wings down). Animating scaleX
+          // through 0 reads as a quick turn; autoRotate is off so it stays level
+          // with its wings up the whole way back.
+          .to(outer, { scaleX: -scale, rotation: 0, duration: 0.35, ease: "power1.inOut" })
+          .to(outer, {
+            motionPath: { path: returnPath, curviness: 1.45, autoRotate: false },
+            duration: inbound,
+            ease: "power1.inOut",
+          })
+          // Turn back to face right, ready for the next outbound loop.
+          .to(outer, { scaleX: scale, rotation: 0, duration: 0.35, ease: "power1.inOut" });
+
+        // Bees that don't emerge from the hive start already partway through the
+        // loop, so on load some are outbound, some returning, some hovering.
+        if (!emerges) tl.progress(Math.random());
 
         // Constant small vertical buzz
         gsap.to(inner, {
