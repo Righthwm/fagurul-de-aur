@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
@@ -12,7 +13,7 @@ const testimonials: Testimonial[] = [
     author: "Andreea M.",
     city: "Timișoara",
     rating: 5,
-    text: "Am luat mierea de salcâm pentru fiul meu de 3 ani, care refuza orice. Acum cere singur o linguriță dimineața. Se vede că e altceva — nu se întărește în borcan ca cea din supermarket.",
+    text: "Am luat mierea de salcâm pentru fiul meu de 3 ani, care refuza orice. Acum cere singur o linguriță dimineața. Are un gust fin, de floare, iar borcanul nu rezistă la noi nici două săptămâni.",
   },
   {
     id: "t2",
@@ -96,7 +97,7 @@ export function TestimonialsSection() {
         aria-hidden="true"
       />
 
-      <div className="max-w-3xl mx-auto">
+      <div className="max-w-6xl mx-auto">
         <motion.div
           ref={ref}
           initial={{ opacity: 0, y: 30 }}
@@ -108,6 +109,37 @@ export function TestimonialsSection() {
           <h2 className="section-heading font-heading">Ce Spun Clienții Noștri</h2>
         </motion.div>
 
+        <div className="grid lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] gap-12 lg:gap-16 items-center">
+          {/* Bear "gallery print" */}
+          <motion.figure
+            initial={{ opacity: 0, x: -40 }}
+            animate={isVisible ? { opacity: 1, x: 0 } : { opacity: 0, x: -40 }}
+            transition={{ duration: 0.7, ease: "easeOut", delay: 0.15 }}
+            className="mx-auto w-full max-w-sm lg:max-w-none"
+          >
+            <div className="relative">
+              <div
+                className="absolute -inset-3 rounded-lg border border-gold-400/30"
+                aria-hidden="true"
+              />
+              <Image
+                src="/images/urs-miere.jpg"
+                alt="Urs brun bând miere direct din borcan, în pădure"
+                width={1024}
+                height={1024}
+                className="relative rounded-lg shadow-xl w-full h-auto object-cover border border-gold-400/10"
+              />
+            </div>
+            <figcaption className="mt-6 text-center lg:text-left">
+              <p className="font-heading text-text-primary text-xl sm:text-2xl italic leading-snug">
+                Clienții sunt înnebuniți după mierea noastră.
+              </p>
+              <p className="text-text-muted text-sm mt-1.5">Unii mai mult decât alții.</p>
+            </figcaption>
+          </motion.figure>
+
+          {/* Testimonial carousel */}
+          <div>
         <div className="relative">
           <AnimatePresence mode="wait" custom={direction}>
             <motion.div
@@ -172,6 +204,8 @@ export function TestimonialsSection() {
               }`}
             />
           ))}
+        </div>
+          </div>
         </div>
       </div>
     </section>
