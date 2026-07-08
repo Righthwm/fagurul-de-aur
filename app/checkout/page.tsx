@@ -18,6 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useCartStore, FREE_SHIPPING_THRESHOLD } from "@/lib/cart";
+import { overclaimedFreeJars } from "@/lib/promo";
 import { couponDiscount } from "@/lib/coupons";
 import { formatPrice } from "@/lib/utils";
 import { HexPattern } from "@/components/ui/HexPattern";
@@ -83,6 +84,16 @@ function Field({
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCartStore();
+  // Exclude bonus jars the cart no longer qualifies for ("indisponibil momentan")
+  // from the order; the server re-validates the rest. The last `overclaimed`
+  // bonus lines are the unavailable ones.
+  const availableBonus = items.filter((i) => i.isBonus).length - overclaimedFreeJars(items);
+  let bonusSeen = 0;
+  const orderableItems = items.filter((i) => {
+    if (!i.isBonus) return true;
+    return bonusSeen++ < availableBonus;
+  });
+  const orderableKeys = new Set(orderableItems.filter((i) => i.isBonus).map((i) => i.bonusKey));
   const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -253,12 +264,13 @@ export default function CheckoutPage() {
       paymentMethod: data.paymentMethod,
       notes: data.notes,
       couponCode: appliedCoupon ?? undefined,
-      items: items.map((i) => ({
+      items: orderableItems.map((i) => ({
         productId: i.product.id,
         name: i.product.name,
         variant: i.selectedVariant.weight ?? i.selectedVariant.type,
         unitPrice: i.selectedVariant.price,
         quantity: i.quantity,
+        isBonus: i.isBonus,
       })),
     };
 
@@ -553,8 +565,12 @@ export default function CheckoutPage() {
                 <ul className="space-y-3 mb-5 max-h-72 overflow-y-auto pr-1">
                   {items.map((item) => {
                     const variantLabel = item.selectedVariant.weight ?? item.selectedVariant.type ?? "";
+                    const bonusUnavailable = item.isBonus && !orderableKeys.has(item.bonusKey);
                     return (
-                      <li key={`${item.product.id}-${item.selectedVariant.price}`} className="flex items-center gap-3 pb-3 border-b border-gold-400/8">
+                      <li
+                        key={item.isBonus ? `bonus-${item.bonusKey}` : `${item.product.id}-${item.selectedVariant.price}`}
+                        className="flex items-center gap-3 pb-3 border-b border-gold-400/8"
+                      >
                         <div
                           className="relative w-11 h-11 rounded-sm shrink-0 overflow-hidden border border-gold-400/10"
                           style={{ background: `radial-gradient(circle at 35% 30%, ${item.product.color}33, ${item.product.color}11)` }}
@@ -570,12 +586,27 @@ export default function CheckoutPage() {
                           ) : null}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <p className="text-text-primary text-sm truncate">{item.product.name}</p>
-                          <p className="text-text-muted text-xs">{variantLabel} × {item.quantity}</p>
+                          <p className="text-text-primary text-sm truncate">
+                            {item.isBonus ? `${item.product.name} (bonus)` : item.product.name}
+                          </p>
+                          <p className="text-text-muted text-xs">
+                            {variantLabel} × {item.quantity}
+                            {bonusUnavailable && <span className="text-amber-300"> · indisponibil momentan</span>}
+                          </p>
                         </div>
-                        <span className="text-gold-300 text-sm font-semibold shrink-0">
-                          {formatPrice(item.selectedVariant.price * item.quantity)}
-                        </span>
+                        {item.isBonus ? (
+                          <span
+                            className={`text-sm font-semibold uppercase tracking-wide shrink-0 ${
+                              bonusUnavailable ? "text-text-muted line-through" : "text-success"
+                            }`}
+                          >
+                            Gratuit
+                          </span>
+                        ) : (
+                          <span className="text-gold-300 text-sm font-semibold shrink-0">
+                            {formatPrice(item.selectedVariant.price * item.quantity)}
+                          </span>
+                        )}
                       </li>
                     );
                   })}

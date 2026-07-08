@@ -8,7 +8,7 @@ import { checkoutInputSchema, persistOrder } from "@/lib/orders";
 export async function POST(request: Request) {
   try {
     const input = checkoutInputSchema.parse(await request.json());
-    const { orderId, totals, notes } = await persistOrder(input, "n/a");
+    const { orderId, totals, notes, items } = await persistOrder(input, "n/a");
 
     try {
       await sendOrderEmail({
@@ -18,7 +18,7 @@ export async function POST(request: Request) {
         paymentMethod: input.paymentMethod,
         notes: notes ?? undefined,
         couponCode: input.couponCode,
-        items: input.items,
+        items,
         totals,
       });
     } catch (mailError) {

@@ -4,6 +4,13 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import type { CartItem, Product, ProductVariant } from "@/types";
 import { products } from "@/lib/products";
+import {
+  variantHoneyKg,
+  earnedFreeJars,
+  claimedFreeJars,
+  unclaimedFreeJars,
+  overclaimedFreeJars,
+} from "@/lib/promo";
 
 // Re-exported from the framework-neutral constants module (this file is
 // "use client"; server code must read the threshold from lib/constants).
@@ -35,6 +42,12 @@ function reconcileItems(items: CartItem[]): CartItem[] {
           (saved.type != null && v.type === saved.type)
       ) ?? product.variants[0];
 
+    // Bonus jars are always a free 1kg jar — keep them at price 0 after refresh
+    // so a catalog price change can never turn a free jar into a paid one.
+    if (item.isBonus) {
+      return [{ ...item, product, selectedVariant: { ...variant, price: 0 } }];
+    }
+
     return [{ ...item, product, selectedVariant: variant }];
   });
 }
@@ -42,7 +55,13 @@ function reconcileItems(items: CartItem[]): CartItem[] {
 interface CartState {
   items: CartItem[];
   isOpen: boolean;
+  /** Whether the "choose your free jar" popup is showing. */
+  bonusChooserOpen: boolean;
   addItem: (product: Product, variant: ProductVariant, quantity?: number) => void;
+  addBonusItem: (product: Product) => void;
+  removeBonusItem: (bonusKey: number) => void;
+  openBonusChooser: () => void;
+  closeBonusChooser: () => void;
   removeItem: (productId: string, variantPrice: number) => void;
   updateQuantity: (productId: string, variantPrice: number, quantity: number) => void;
   clearCart: () => void;
@@ -50,6 +69,15 @@ interface CartState {
   closeCart: () => void;
   totalItems: () => number;
   totalPrice: () => number;
+  /** Free jars the paid honey qualifies for (1 per 10kg). */
+  earnedFreeJars: () => number;
+  /** Free jars already in the cart. */
+  claimedFreeJars: () => number;
+  /** A newly earned free jar is waiting to be chosen. */
+  unclaimedFreeJars: () => number;
+  /** Free jars claimed beyond what the cart now qualifies for (shown as
+   *  "indisponibil momentan" and dropped at checkout). */
+  overclaimedFreeJars: () => number;
 }
 
 export const useCartStore = create<CartState>()(
@@ -57,6 +85,7 @@ export const useCartStore = create<CartState>()(
     (set, get) => ({
       items: [],
       isOpen: false,
+      bonusChooserOpen: false,
 
       addItem: (product, variant, quantity = 1) => {
         set((state) => {
@@ -77,6 +106,33 @@ export const useCartStore = create<CartState>()(
           };
         });
       },
+
+      // Add a free 1kg jar of the chosen honey (price 0). Each earned jar is its
+      // own line so availability ("indisponibil momentan") is tracked per line.
+      addBonusItem: (product) => {
+        const base =
+          product.variants.find((v) => variantHoneyKg(v) === 1) ?? product.variants[0];
+        const bonusVariant: ProductVariant = { ...base, price: 0 };
+        set((state) => ({
+          items: [
+            ...state.items,
+            {
+              product,
+              quantity: 1,
+              selectedVariant: bonusVariant,
+              isBonus: true,
+              bonusKey: Date.now() + Math.floor(Math.random() * 1000),
+            },
+          ],
+        }));
+      },
+
+      removeBonusItem: (bonusKey) => {
+        set((state) => ({ items: state.items.filter((i) => i.bonusKey !== bonusKey) }));
+      },
+
+      openBonusChooser: () => set({ bonusChooserOpen: true }),
+      closeBonusChooser: () => set({ bonusChooserOpen: false }),
 
       removeItem: (productId, variantPrice) => {
         set((state) => ({
@@ -107,6 +163,11 @@ export const useCartStore = create<CartState>()(
       totalItems: () => get().items.reduce((sum, i) => sum + i.quantity, 0),
       totalPrice: () =>
         get().items.reduce((sum, i) => sum + i.selectedVariant.price * i.quantity, 0),
+
+      earnedFreeJars: () => earnedFreeJars(get().items),
+      claimedFreeJars: () => claimedFreeJars(get().items),
+      unclaimedFreeJars: () => unclaimedFreeJars(get().items),
+      overclaimedFreeJars: () => overclaimedFreeJars(get().items),
     }),
     {
       name: "fagurul-de-aur-cart",

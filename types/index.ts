@@ -49,6 +49,11 @@ export interface CartItem {
   product: Product;
   quantity: number;
   selectedVariant: ProductVariant;
+  /** A free jar earned through the "al 11-lea gratuit" promotion (price 0). */
+  isBonus?: boolean;
+  /** Unique id for a bonus line (bonus jars all share price 0, so they need
+   *  their own identity for removal). Absent on paid items. */
+  bonusKey?: number;
 }
 
 export interface TeamMember {

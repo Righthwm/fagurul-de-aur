@@ -2,14 +2,24 @@
 
 import { motion, AnimatePresence } from "framer-motion";
 import Image from "next/image";
-import { X, Plus, Minus, Trash2, ShoppingBasket } from "lucide-react";
+import { X, Plus, Minus, Trash2, ShoppingBasket, Gift } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCartStore, shippingFor, FREE_SHIPPING_THRESHOLD } from "@/lib/cart";
+import { overclaimedFreeJars, unclaimedFreeJars } from "@/lib/promo";
 import { formatPrice } from "@/lib/utils";
 
 export function CartDrawer() {
-  const { isOpen, closeCart, items, removeItem, updateQuantity, totalPrice, totalItems } =
-    useCartStore();
+  const {
+    isOpen,
+    closeCart,
+    items,
+    removeItem,
+    removeBonusItem,
+    updateQuantity,
+    totalPrice,
+    totalItems,
+    openBonusChooser,
+  } = useCartStore();
 
   const subtotal = totalPrice();
   const shipping = shippingFor(subtotal);
@@ -17,6 +27,14 @@ export function CartDrawer() {
   const count = totalItems();
   const remainingForFreeShipping = FREE_SHIPPING_THRESHOLD - subtotal;
   const router = useRouter();
+
+  // Split paid lines from earned free jars. The last `overclaimed` bonus lines
+  // are shown as "indisponibil momentan" (cart dropped below the qualifying kg).
+  const paidItems = items.filter((i) => !i.isBonus);
+  const bonusItems = items.filter((i) => i.isBonus);
+  const overclaimed = overclaimedFreeJars(items);
+  const firstUnavailableIdx = bonusItems.length - overclaimed;
+  const unclaimed = unclaimedFreeJars(items);
 
   // Navigate programmatically: the drawer unmounts on closeCart(), which would
   // otherwise abort a plain <Link> click before the route change commits.
@@ -78,7 +96,7 @@ export function CartDrawer() {
                 </div>
               ) : (
                 <ul className="space-y-4">
-                  {items.map((item) => {
+                  {paidItems.map((item) => {
                     const variantLabel =
                       item.selectedVariant.weight ?? item.selectedVariant.type ?? "";
                     return (
@@ -165,6 +183,85 @@ export function CartDrawer() {
                       </li>
                     );
                   })}
+
+                  {/* Free jars earned through the promotion */}
+                  {bonusItems.map((item, i) => {
+                    const unavailable = i >= firstUnavailableIdx;
+                    return (
+                      <li
+                        key={item.bonusKey}
+                        className="flex gap-4 py-3 border-b border-gold-400/8"
+                      >
+                        <div
+                          className={`relative w-14 h-14 rounded-sm shrink-0 overflow-hidden border flex items-center justify-center ${
+                            unavailable ? "border-gold-400/10 opacity-50" : "border-gold-400/40"
+                          }`}
+                          style={{
+                            background: `radial-gradient(circle at 35% 30%, ${item.product.color}33, ${item.product.color}11)`,
+                          }}
+                        >
+                          {item.product.image ? (
+                            <Image
+                              src={item.product.image}
+                              alt={item.product.name}
+                              fill
+                              sizes="56px"
+                              className="object-contain p-0.5 drop-shadow-[0_3px_5px_rgba(0,0,0,0.35)]"
+                            />
+                          ) : (
+                            <svg width="28" height="28" viewBox="0 0 28 28" aria-hidden="true">
+                              <ellipse cx="14" cy="14" rx="11" ry="10" fill={item.product.color} opacity="0.9" />
+                            </svg>
+                          )}
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-text-primary text-sm font-medium truncate flex items-center gap-1.5">
+                            <Gift size={13} className="text-gold-400 shrink-0" />
+                            {item.product.name}
+                          </p>
+                          <p className="text-text-muted text-xs mt-0.5">
+                            {item.selectedVariant.weight ?? item.selectedVariant.type} · borcan bonus
+                          </p>
+                          {unavailable && (
+                            <p className="text-amber-300 text-xs mt-1">Indisponibil momentan</p>
+                          )}
+                        </div>
+
+                        <div className="flex flex-col items-end justify-between shrink-0">
+                          <button
+                            onClick={() => item.bonusKey != null && removeBonusItem(item.bonusKey)}
+                            className="text-text-muted hover:text-error transition-colors"
+                            aria-label={`Elimină borcanul bonus ${item.product.name}`}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                          <span
+                            className={`font-body text-sm font-semibold uppercase tracking-wide ${
+                              unavailable ? "text-text-muted line-through" : "text-success"
+                            }`}
+                          >
+                            Gratuit
+                          </span>
+                        </div>
+                      </li>
+                    );
+                  })}
+
+                  {/* Reclaim prompt for an earned-but-unchosen free jar */}
+                  {unclaimed > 0 && (
+                    <li>
+                      <button
+                        onClick={openBonusChooser}
+                        className="w-full flex items-center justify-center gap-2 rounded-sm border border-dashed border-gold-400/50 bg-gold-400/5 px-4 py-3 text-sm text-gold-300 hover:bg-gold-400/10 transition-colors"
+                      >
+                        <Gift size={15} />
+                        {unclaimed > 1
+                          ? `Alege cele ${unclaimed} borcane gratuite`
+                          : "Alege borcanul gratuit"}
+                      </button>
+                    </li>
+                  )}
                 </ul>
               )}
             </div>

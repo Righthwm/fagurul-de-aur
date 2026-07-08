@@ -6,6 +6,7 @@ import { Navbar } from "@/components/layout/Navbar";
 import { InlineScript } from "@/components/ui/InlineScript";
 import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/shop/CartDrawer";
+import { FreeJarPopup } from "@/components/shop/FreeJarPopup";
 import {
   siteConfig,
   siteKeywords,
@@ -93,6 +94,7 @@ export default function RootLayout({
           </main>
           <Footer />
           <CartDrawer />
+          <FreeJarPopup />
         </SessionProvider>
       </body>
     </html>

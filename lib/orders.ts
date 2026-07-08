@@ -4,6 +4,8 @@ import { auth } from "@/auth";
 import { estimateShipping, cartSubtotal } from "@/lib/shipping";
 import { couponDiscount, getCoupon } from "@/lib/coupons";
 import { localityTypeOf } from "@/lib/localities";
+import { enforceBonusEntitlement } from "@/lib/promo";
+import { products } from "@/lib/products";
 
 /** Shared validation for both the ramburs checkout and card payment-initiate routes. */
 export const checkoutInputSchema = z.object({
@@ -24,13 +26,19 @@ export const checkoutInputSchema = z.object({
   couponCode: z.string().max(40).optional(),
   items: z
     .array(
-      z.object({
-        productId: z.string(),
-        name: z.string(),
-        variant: z.string().optional(),
-        unitPrice: z.number().int().positive(),
-        quantity: z.number().int().positive(),
-      })
+      z
+        .object({
+          productId: z.string(),
+          name: z.string(),
+          variant: z.string().optional(),
+          unitPrice: z.number().int().nonnegative(),
+          quantity: z.number().int().positive(),
+          isBonus: z.boolean().optional(),
+        })
+        // Only free bonus jars may be priced at 0; paid lines must cost > 0.
+        .refine((i) => i.isBonus === true || i.unitPrice > 0, {
+          message: "unitPrice must be positive for non-bonus items",
+        })
     )
     .min(1),
 });
@@ -47,6 +55,8 @@ export interface PersistedOrder {
   totals: { subtotal: number; shipping: number; discount: number; total: number };
   shippingTbd: boolean;
   notes: string | null;
+  /** Items actually ordered — after the free-jar entitlement guard. */
+  items: CheckoutInput["items"];
 }
 
 /**
@@ -58,7 +68,12 @@ export async function persistOrder(input: CheckoutInput, paymentStatus: string):
   const orderId = `SB-${Date.now().toString(36).toUpperCase()}`;
   const session = await auth();
 
-  const lines = input.items.map((i) => ({
+  // Re-derive the free-jar entitlement from paid honey, dropping any bonus jars
+  // beyond it so a tampered payload can't smuggle in free items.
+  const categoryOf = (id: string) => products.find((p) => p.id === id)?.category;
+  const orderedItems = enforceBonusEntitlement(input.items, categoryOf);
+
+  const lines = orderedItems.map((i) => ({
     productId: i.productId,
     variantPrice: i.unitPrice,
     quantity: i.quantity,
@@ -102,7 +117,7 @@ export async function persistOrder(input: CheckoutInput, paymentStatus: string):
       paymentMethod: input.paymentMethod,
       paymentStatus,
       notes,
-      items: JSON.stringify(input.items),
+      items: JSON.stringify(orderedItems),
       subtotal,
       shipping,
       couponCode: appliedCode,
@@ -111,5 +126,5 @@ export async function persistOrder(input: CheckoutInput, paymentStatus: string):
     },
   });
 
-  return { orderId, totals: { subtotal, shipping, discount, total }, shippingTbd, notes };
+  return { orderId, totals: { subtotal, shipping, discount, total }, shippingTbd, notes, items: orderedItems };
 }
