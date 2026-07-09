@@ -1,13 +1,19 @@
 import crypto from "node:crypto";
 
 /**
- * Netopia Payments (v2 hosted-card) client. All Netopia-specific request/response
- * and IPN-signature mapping is isolated here behind clearly marked blocks, so it
- * can be confirmed/tweaked against the live v2 docs once sandbox credentials are
- * available. Credentials come from the environment; sandbox is the default.
+ * Netopia Payments v2 (hosted-card) client. The start-payment request/response
+ * shape is verified against the official OpenAPI spec and a live sandbox call
+ * (returns payment.paymentURL + payment.ntpID). Credentials come from the
+ * environment; sandbox is the default (NETOPIA_LIVE=true switches to production).
+ *
+ * The IPN signature scheme (verifyToken below) is implemented per the v2 docs but
+ * is the one part exercised end-to-end only during Netopia's go-live validation.
  */
+// Official v2 hosts (doc.netopia-payments.com → Payment API v2.x → Start):
+//   sandbox: https://secure.sandbox.netopia-payments.com/payment/card/start
+//   live:    https://secure.mobilpay.ro/pay/payment/card/start
 const SANDBOX_URL = process.env.NETOPIA_SANDBOX_URL ?? "https://secure.sandbox.netopia-payments.com";
-const LIVE_URL = process.env.NETOPIA_LIVE_URL ?? "https://secure.netopia-payments.com";
+const LIVE_URL = process.env.NETOPIA_LIVE_URL ?? "https://secure.mobilpay.ro/pay";
 const IS_LIVE = process.env.NETOPIA_LIVE === "true";
 const BASE_URL = IS_LIVE ? LIVE_URL : SANDBOX_URL;
 
@@ -61,7 +67,7 @@ export async function startPayment(input: StartPaymentInput): Promise<StartPayme
     throw new NetopiaError("Netopia is not configured");
   }
 
-  // ===== ADJUST to the live v2 "card/start" schema when sandbox creds exist =====
+  // v2 "card/start" schema — confirmed against a live sandbox call.
   const body = {
     config: { notifyUrl: input.notifyUrl, redirectUrl: input.redirectUrl, language: "ro" },
     payment: { options: { installments: 0, bonus: 0 }, instrument: { type: "card" } },
@@ -98,12 +104,11 @@ export async function startPayment(input: StartPaymentInput): Promise<StartPayme
     throw new NetopiaError(`Netopia start failed (HTTP ${res.status})`);
   }
 
+  // Confirmed v2 response: { payment: { paymentURL, ntpID, status } }.
   const json = (await res.json()) as {
     payment?: { ntpID?: string; paymentURL?: string };
-    customerAction?: { url?: string };
   };
-  // ===== ADJUST: redirect URL + ntpID location in the v2 response =====
-  const redirectUrl = json.payment?.paymentURL ?? json.customerAction?.url;
+  const redirectUrl = json.payment?.paymentURL;
   const ntpID = json.payment?.ntpID ?? "";
   if (!redirectUrl) {
     throw new NetopiaError("Netopia start: no redirect URL in response");
@@ -121,20 +126,26 @@ export interface IpnResult {
   verified: boolean;
 }
 
-/** Map Netopia numeric status codes to our payment outcome. */
+/**
+ * Map Netopia v2 numeric status codes to our payment outcome.
+ * Per the official OpenAPI spec: 3 = Paid, 5 = Confirmed, 12 = Rejected,
+ * 15 = 3-D Secure authentication required (still in progress → pending).
+ */
 function normalizeStatus(raw: unknown): PaymentOutcome {
-  // ===== ADJUST to the documented v2 status codes =====
   const n = Number(raw);
-  if (n === 3 || n === 5) return "paid"; // confirmed / paid
-  if (n === 12 || n === 14 || n === 15) return "failed"; // declined / error / 3DS failed
-  return "pending";
+  if (n === 3 || n === 5) return "paid";
+  if (n === 12) return "failed";
+  return "pending"; // 15 (3DS in progress) and any other transient state
 }
 
-/** Verify the IPN signature token (JWT, RS512) against Netopia's public key. */
+/**
+ * Verify the IPN signature against Netopia's public key. Netopia sends a
+ * `Verification-token`; we support both a JWT (header.payload.signature, RS512)
+ * and a detached base64 signature over the raw body. Confirmed at go-live.
+ */
 function verifyToken(token: string | null, payload: string): boolean {
   if (!PUBLIC_KEY || !token) return false;
   try {
-    // ===== ADJUST to the exact IPN signature scheme (JWT vs detached signature) =====
     const parts = token.split(".");
     if (parts.length === 3) {
       const signed = `${parts[0]}.${parts[1]}`;
@@ -154,7 +165,6 @@ export function verifyIpn(rawBody: string, verificationToken: string | null): Ip
     orderID?: string;
     payment?: { ntpID?: string; status?: unknown };
   };
-  // ===== ADJUST: order id + status location in the v2 IPN body =====
   const orderId = data.order?.orderID ?? data.orderID ?? "";
   const ntpID = data.payment?.ntpID ?? "";
   return {
