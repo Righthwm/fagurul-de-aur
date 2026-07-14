@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Minus, Plus, ShoppingBasket, CreditCard, MapPin, Leaf, Truck, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { BonusPackOffer } from "@/components/shop/BonusPackOffer";
 import { Badge } from "@/components/ui/Badge";
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import { useCartStore } from "@/lib/cart";
@@ -239,6 +240,12 @@ export function ProductDetail({ product }: { product: Product }) {
               )}
             </motion.button>
           </div>
+
+          {product.id === "miere-rapita" && (
+            <div className="mt-5">
+              <BonusPackOffer />
+            </div>
+          )}
 
           {/* Buy now → straight to checkout */}
           <button onClick={handleBuyNow} className="btn-secondary w-full gap-2 mb-6">

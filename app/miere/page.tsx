@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Gift } from "lucide-react";
+import { BonusPackOffer } from "@/components/shop/BonusPackOffer";
 import { ProductGrid } from "@/components/shop/ProductGrid";
 import { BannerVideo } from "@/components/ui/BannerVideo";
 import { HexPattern } from "@/components/ui/HexPattern";
@@ -78,6 +79,10 @@ export default function MagazinPage() {
                 la alegere!
               </p>
             </div>
+          </div>
+
+          <div className="mt-5 flex justify-center">
+            <BonusPackOffer />
           </div>
         </div>
       </div>
