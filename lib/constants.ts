@@ -13,19 +13,14 @@ export function shippingFee(localityType: "urban" | "rural"): number {
 }
 
 /**
- * Per-honey-jar delivery surcharge (lei), on top of the flat locality fee.
- * Jars up to the threshold cost the full rate; each jar beyond it the reduced
- * rate. A honey jar is 1kg, so the threshold of 10 jars equals the 10 kg tier.
+ * Flat per-honey-jar delivery surcharge (lei), on top of the flat locality fee.
+ * A honey jar is 1kg; the same rate applies to every jar, at any count.
  */
-export const HONEY_JAR_SHIPPING_SURCHARGE = 5;
-export const HONEY_JAR_SHIPPING_SURCHARGE_REDUCED = 3;
-export const HONEY_JAR_SURCHARGE_THRESHOLD = 10;
+export const HONEY_JAR_SHIPPING_SURCHARGE = 2;
 
-/** Total honey-jar surcharge (lei) for a given number of jars, tiered at the threshold. */
+/** Total honey-jar surcharge (lei): a flat rate per jar, regardless of count. */
 export function honeyJarSurcharge(jars: number): number {
-  const full = Math.min(jars, HONEY_JAR_SURCHARGE_THRESHOLD);
-  const extra = Math.max(0, jars - HONEY_JAR_SURCHARGE_THRESHOLD);
-  return full * HONEY_JAR_SHIPPING_SURCHARGE + extra * HONEY_JAR_SHIPPING_SURCHARGE_REDUCED;
+  return jars * HONEY_JAR_SHIPPING_SURCHARGE;
 }
 
 /** Discount code offered for newsletter / exit-popup signups. */

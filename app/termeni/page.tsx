@@ -184,7 +184,7 @@ export default function TermeniPage() {
                 comenzii. Termenul de livrare maxim este de 30 de zile calendaristice, conform legii.
               </p>
               <ul className="list-disc pl-5 space-y-2">
-                <li>Cost livrare: <strong className="text-text-primary">30 lei</strong> pentru livrarea la oraș și <strong className="text-text-primary">50 lei</strong> pentru livrarea la sat, plus <strong className="text-text-primary">5 lei</strong> pentru fiecare borcan de miere din comandă (câte <strong className="text-text-primary">3 lei</strong> pentru fiecare borcan peste 10 kg), afișat la finalizarea comenzii (înainte de confirmarea plății);</li>
+                <li>Cost livrare: <strong className="text-text-primary">30 lei</strong> pentru livrarea la oraș și <strong className="text-text-primary">50 lei</strong> pentru livrarea la sat, plus <strong className="text-text-primary">2 lei</strong> pentru fiecare borcan de miere din comandă, afișat la finalizarea comenzii (înainte de confirmarea plății);</li>
                 <li>Produsele sunt ambalate protector (carton, separatoare), iar pe timp de caniculă se folosesc soluții suplimentare de protecție termică.</li>
               </ul>
               <p>

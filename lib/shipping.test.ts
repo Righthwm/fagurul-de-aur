@@ -28,27 +28,27 @@ describe("estimateShipping", () => {
   const urban = { county: "Cluj", locality: "Cluj-Napoca", localityType: "urban" as const, cashOnDelivery: 0 };
   const rural = { county: "Gorj", locality: "Sterpoaia", localityType: "rural" as const, cashOnDelivery: 0 };
 
-  it("adds 5 lei per honey jar on top of the flat 30 lei urban fee", async () => {
+  it("adds 2 lei per honey jar on top of the flat 30 lei urban fee", async () => {
     const result = await estimateShipping({ items: [salcam], ...urban }); // 2 × 1kg jars
-    expect(result.cost).toBe(40); // 30 + 2×5
+    expect(result.cost).toBe(34); // 30 + 2×2
   });
 
   it("adds the surcharge on top of the 50 lei rural fee; propolis is not a honey jar", async () => {
     const result = await estimateShipping({ items: [salcam, propolis], ...rural }); // 2 honey jars
-    expect(result.cost).toBe(60); // 50 + 2×5
+    expect(result.cost).toBe(54); // 50 + 2×2
     expect(result.weightKg).toBe(3.0);
   });
 
-  it("charges only 3 lei per honey jar beyond the 10-jar (10 kg) threshold", async () => {
+  it("keeps the flat 2 lei rate at any jar count (no threshold)", async () => {
     const many = [{ productId: "miere-salcam", variantPrice: 45, quantity: 12 }]; // 12 × 1kg jars
     const result = await estimateShipping({ items: many, ...urban });
-    expect(result.cost).toBe(86); // 30 + (10×5 + 2×3)
+    expect(result.cost).toBe(54); // 30 + 12×2
   });
 
   it("counts the 10-jar rapita pack as 10 jars", async () => {
     const pack = [{ productId: "miere-rapita", variantPrice: 300, quantity: 1 }];
     const result = await estimateShipping({ items: pack, ...urban });
-    expect(result.cost).toBe(80); // 30 flat + 10×5, exactly at the threshold
+    expect(result.cost).toBe(50); // 30 flat + 10×2
     expect(result.weightKg).toBe(14); // 10 jars × 1.4kg gross
   });
 });
