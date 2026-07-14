@@ -1,5 +1,5 @@
 import { products } from "@/lib/products";
-import { shippingFee } from "@/lib/constants";
+import { shippingFee, honeyJarSurcharge } from "@/lib/constants";
 
 /** Fallback weight (kg) for a cart line whose variant has no configured weight. */
 const DEFAULT_ITEM_WEIGHT_KG = 1;
@@ -27,8 +27,27 @@ export function cartSubtotal(items: CartLineInput[]): number {
   return items.reduce((sum, line) => sum + line.variantPrice * line.quantity, 0);
 }
 
+/**
+ * Number of honey jars in the cart (propolis and any non-honey product excluded).
+ * A multi-jar variant such as "Pachet 5 borcane" counts as its jar count (5).
+ * Bonus jars (price 0) fall back to the base 1kg jar and count as one each.
+ */
+export function honeyJarCount(items: CartLineInput[]): number {
+  let jars = 0;
+  for (const line of items) {
+    const product = products.find((p) => p.id === line.productId);
+    if (!product || product.category !== "miere") continue;
+    const variant =
+      product.variants.find((v) => v.price === line.variantPrice) ?? product.variants[0];
+    const label = variant?.weight ?? variant?.type ?? "";
+    const pack = label.match(/(\d+)\s*borcane/i);
+    jars += (pack ? parseInt(pack[1], 10) : 1) * line.quantity;
+  }
+  return jars;
+}
+
 export interface ShippingResult {
-  /** Flat delivery fee in lei: 30 for urban localities, 50 for rural ones. */
+  /** Delivery fee (lei): flat locality fee (30 urban / 50 rural) + tiered per-jar surcharge. */
   cost: number;
   /** Gross parcel weight (kg), informative only — the fee no longer depends on it. */
   weightKg: number;
@@ -45,11 +64,11 @@ export interface EstimateInput {
 
 /**
  * Authoritative shipping calculation, shared by the estimate endpoint and the
- * checkout route. A flat two-tier fee: 30 lei to a city (oraș), 50 lei to a
- * village (sat), based on the delivery locality.
+ * checkout route. A flat two-tier locality fee (30 lei city / 50 lei village)
+ * plus a per-honey-jar surcharge: 5 lei each up to 10 jars, 3 lei each beyond.
  */
 export async function estimateShipping(input: EstimateInput): Promise<ShippingResult> {
   const weightKg = packageWeightKg(input.items);
-  const cost = shippingFee(input.localityType);
+  const cost = shippingFee(input.localityType) + honeyJarSurcharge(honeyJarCount(input.items));
   return { cost, weightKg };
 }

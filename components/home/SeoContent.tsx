@@ -22,7 +22,7 @@ export const homeFaqs: { q: string; a: string }[] = [
   },
   {
     q: "Cât durează livrarea mierii în România?",
-    a: "Livrăm prin curier rapid în toată România, de regulă în 24–48 de ore lucrătoare. Costul transportului este 30 lei pentru livrarea la oraș și 50 lei pentru livrarea la sat, afișat la finalizarea comenzii. Poți comanda miere naturală online cu plata cu cardul sau ramburs la livrare.",
+    a: "Livrăm prin curier rapid în toată România, de regulă în 24–48 de ore lucrătoare. Costul transportului este 30 lei pentru livrarea la oraș și 50 lei pentru livrarea la sat, plus 5 lei pentru fiecare borcan de miere din comandă (câte 3 lei pentru fiecare borcan peste 10 kg), afișat la finalizarea comenzii. Poți comanda miere naturală online cu plata cu cardul sau ramburs la livrare.",
   },
 ];
 
