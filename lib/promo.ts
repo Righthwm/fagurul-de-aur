@@ -133,6 +133,29 @@ export function packBonusQuantity(product: Product): number {
   return product.id === PROPOLIS_ID ? 2 : 1;
 }
 
+/**
+ * Bonus lines still within entitlement, by bonusKey. Each pool is capped on its
+ * own — an overclaimed pack bonus must not mark a per-kg jar unavailable. The
+ * first `available` bonus lines of each pool (in cart order) are orderable; the
+ * rest are "indisponibil momentan" (kept in the cart UI, dropped at checkout).
+ * Shared by the cart drawer and the checkout page so they always agree.
+ */
+export function orderableBonusKeys(items: CartItem[]): Set<number> {
+  const kgLines = items.filter((i) => i.isBonus && bonusSourceOf(i) === "kg").length;
+  const packLines = items.filter((i) => i.isBonus && bonusSourceOf(i) === "pack").length;
+  const availableKg = kgLines - overclaimedFreeJars(items);
+  const availablePack = packLines - overclaimedPackBonuses(items);
+  let kgSeen = 0;
+  let packSeen = 0;
+  const keys = new Set<number>();
+  for (const i of items) {
+    if (!i.isBonus) continue;
+    const ok = bonusSourceOf(i) === "kg" ? kgSeen++ < availableKg : packSeen++ < availablePack;
+    if (ok && i.bonusKey != null) keys.add(i.bonusKey);
+  }
+  return keys;
+}
+
 /** Minimal shape of a checkout line, for the server-side promo guard. */
 export interface CheckoutLine {
   productId: string;

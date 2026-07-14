@@ -15,6 +15,7 @@ import {
   isPackBonusEligible,
   packBonusQuantity,
   enforceBonusEntitlement,
+  orderableBonusKeys,
   type CheckoutLine,
 } from "./promo";
 import { products } from "./products";
@@ -384,5 +385,38 @@ describe("enforceBonusEntitlement — kg pool", () => {
       catalogOf
     );
     expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+  });
+});
+
+describe("orderableBonusKeys", () => {
+  it("keeps both bonus keys when the cart is fully settled", () => {
+    const kgBonus = bonusLine("miere-salcam", "kg");
+    const packBonus = bonusLine("miere-tei", "pack");
+    const cart = [
+      line("miere-rapita", pack10kg),
+      line("miere-tei", jar1kg),
+      kgBonus,
+      packBonus,
+    ];
+    const keys = orderableBonusKeys(cart);
+    expect(keys.has(kgBonus.bonusKey!)).toBe(true);
+    expect(keys.has(packBonus.bonusKey!)).toBe(true);
+  });
+
+  it("keeps the kg bonus but drops the pack bonus when the trigger jar is removed", () => {
+    // Pack alone still earns 10kg → the kg jar stays entitled, but with no
+    // non-pack trigger jar, earnedPackBonuses is 0 → the pack bonus is stranded.
+    // This is the exact cross-pool bug: the kg jar must not be marked unavailable.
+    const kgBonus = bonusLine("miere-salcam", "kg");
+    const packBonus = bonusLine("miere-tei", "pack");
+    const cart = [line("miere-rapita", pack10kg), kgBonus, packBonus];
+    const keys = orderableBonusKeys(cart);
+    expect(keys.has(kgBonus.bonusKey!)).toBe(true);
+    expect(keys.has(packBonus.bonusKey!)).toBe(false);
+  });
+
+  it("is empty for a cart with only paid items", () => {
+    const cart = [line("miere-tei", jar1kg, 10), line("miere-rapita", pack10kg)];
+    expect(orderableBonusKeys(cart).size).toBe(0);
   });
 });

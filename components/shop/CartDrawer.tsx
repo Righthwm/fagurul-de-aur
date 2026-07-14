@@ -5,7 +5,7 @@ import Image from "next/image";
 import { X, Plus, Minus, Trash2, ShoppingBasket, Gift } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "@/lib/cart";
-import { overclaimedFreeJars, unclaimedFreeJars } from "@/lib/promo";
+import { orderableBonusKeys, unclaimedFreeJars, unclaimedPackBonuses } from "@/lib/promo";
 import { formatPrice } from "@/lib/utils";
 
 export function CartDrawer() {
@@ -28,13 +28,13 @@ export function CartDrawer() {
   const count = totalItems();
   const router = useRouter();
 
-  // Split paid lines from earned free jars. The last `overclaimed` bonus lines
-  // are shown as "indisponibil momentan" (cart dropped below the qualifying kg).
+  // Split paid lines from earned free jars. Bonus lines outside their pool's
+  // entitlement are shown as "indisponibil momentan" (cart dropped below the
+  // qualifying kg, or the pack/trigger jar was removed).
   const paidItems = items.filter((i) => !i.isBonus);
   const bonusItems = items.filter((i) => i.isBonus);
-  const overclaimed = overclaimedFreeJars(items);
-  const firstUnavailableIdx = bonusItems.length - overclaimed;
-  const unclaimed = unclaimedFreeJars(items);
+  const orderableKeys = orderableBonusKeys(items);
+  const unclaimed = unclaimedFreeJars(items) + unclaimedPackBonuses(items);
 
   // Navigate programmatically: the drawer unmounts on closeCart(), which would
   // otherwise abort a plain <Link> click before the route change commits.
@@ -185,8 +185,8 @@ export function CartDrawer() {
                   })}
 
                   {/* Free jars earned through the promotion */}
-                  {bonusItems.map((item, i) => {
-                    const unavailable = i >= firstUnavailableIdx;
+                  {bonusItems.map((item) => {
+                    const unavailable = item.bonusKey == null || !orderableKeys.has(item.bonusKey);
                     return (
                       <li
                         key={item.bonusKey}
