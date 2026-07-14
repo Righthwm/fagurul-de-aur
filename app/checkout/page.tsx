@@ -18,7 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useCartStore } from "@/lib/cart";
-import { overclaimedFreeJars } from "@/lib/promo";
+import { bonusSourceOf, overclaimedFreeJars, overclaimedPackBonuses } from "@/lib/promo";
 import { couponDiscount } from "@/lib/coupons";
 import { formatPrice } from "@/lib/utils";
 import { HexPattern } from "@/components/ui/HexPattern";
@@ -84,14 +84,19 @@ function Field({
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCartStore();
-  // Exclude bonus jars the cart no longer qualifies for ("indisponibil momentan")
-  // from the order; the server re-validates the rest. The last `overclaimed`
-  // bonus lines are the unavailable ones.
-  const availableBonus = items.filter((i) => i.isBonus).length - overclaimedFreeJars(items);
-  let bonusSeen = 0;
+  // Exclude bonus lines the cart no longer qualifies for ("indisponibil momentan")
+  // from the order; the server re-validates the rest. Each pool is capped on its
+  // own — an overclaimed pack bonus must not drop a per-kg jar. The last
+  // `overclaimed` lines of each pool are the unavailable ones.
+  const bonusesOf = (source: "kg" | "pack") =>
+    items.filter((i) => i.isBonus && bonusSourceOf(i) === source).length;
+  const availableKg = bonusesOf("kg") - overclaimedFreeJars(items);
+  const availablePack = bonusesOf("pack") - overclaimedPackBonuses(items);
+  let kgSeen = 0;
+  let packSeen = 0;
   const orderableItems = items.filter((i) => {
     if (!i.isBonus) return true;
-    return bonusSeen++ < availableBonus;
+    return bonusSourceOf(i) === "kg" ? kgSeen++ < availableKg : packSeen++ < availablePack;
   });
   const orderableKeys = new Set(orderableItems.filter((i) => i.isBonus).map((i) => i.bonusKey));
   const [mounted, setMounted] = useState(false);
@@ -264,6 +269,7 @@ export default function CheckoutPage() {
         unitPrice: i.selectedVariant.price,
         quantity: i.quantity,
         isBonus: i.isBonus,
+        bonusSource: i.bonusSource,
       })),
     };
 
