@@ -163,9 +163,15 @@ export function enforceBonusEntitlement<T extends CheckoutLine>(
   let packs = 0;
   let triggerJars = 0;
   for (const line of lines) {
-    if (line.isBonus || catalogOf(line.productId)?.category !== "miere") continue;
-    paidKg += honeyKgFromLabel(line.variant ?? "") * line.quantity;
-    if (variantOf(line)?.bonusPack) packs += line.quantity;
+    if (line.isBonus || line.quantity <= 0 || catalogOf(line.productId)?.category !== "miere")
+      continue;
+    // Resolve the label against the catalog and take the weight from there: never
+    // trust the client's kg claim. An unrecognized label earns nothing. This is
+    // the same lookup that classifies pack-vs-trigger, so the two can't disagree.
+    const variant = variantOf(line);
+    if (!variant) continue;
+    paidKg += variantHoneyKg(variant) * line.quantity;
+    if (variant.bonusPack) packs += line.quantity;
     else triggerJars += line.quantity;
   }
 
@@ -176,6 +182,7 @@ export function enforceBonusEntitlement<T extends CheckoutLine>(
   let keptPack = 0;
   return lines.flatMap((line) => {
     if (!line.isBonus) return [line];
+    if (line.quantity <= 0) return []; // a non-positive claim can't move either cap
 
     if (bonusSourceOf(line) === "kg") {
       // The per-kg promo grants a free 1kg honey jar (salcam allowed). Reject

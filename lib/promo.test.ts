@@ -352,4 +352,37 @@ describe("enforceBonusEntitlement — kg pool", () => {
     );
     expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
   });
+
+  it("keeps the earned free jar for a legit 10kg cart (positive control)", () => {
+    const kept = enforceBonusEntitlement([paidTenKg, kgBonus("miere-tei", "1kg")], catalogOf);
+    const bonus = kept.find((l) => l.isBonus);
+    expect(bonus).toBeDefined();
+    expect(bonus?.unitPrice).toBe(0);
+  });
+
+  it("ignores a forged oversized variant label on a paid line", () => {
+    // One real cheap jar, but the label lies about its weight. The catalog has no
+    // "999kg" variant, so no kg entitlement is earned and every bonus is dropped.
+    const forgedPaid: CheckoutLine = {
+      productId: "miere-tei",
+      variant: "999kg",
+      unitPrice: 30,
+      quantity: 1,
+    };
+    const kept = enforceBonusEntitlement(
+      [forgedPaid, kgBonus("miere-tei", "1kg"), kgBonus("miere-tei", "1kg")],
+      catalogOf
+    );
+    expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+  });
+
+  it("a negative-quantity bonus line can't lift the cap for a later line", () => {
+    // 10kg paid honey earns exactly 1 kg bonus. A -1000 line must not drive the
+    // running tally negative and open headroom for the following oversized line.
+    const kept = enforceBonusEntitlement(
+      [paidTenKg, kgBonus("miere-tei", "1kg", -1000), kgBonus("miere-tei", "1kg", 999)],
+      catalogOf
+    );
+    expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+  });
 });
