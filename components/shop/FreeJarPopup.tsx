@@ -44,17 +44,22 @@ export function FreeJarPopup() {
   const [index, setIndex] = useState(0);
   const prevPending = useRef(0);
 
+  // Restart the carousel when the mode switches. Done during render (not in an
+  // effect) so the reset lands before paint — otherwise the first render after a
+  // claim reads the old index against the new mode's list and the keyed carousel
+  // flickers to the wrong product for one frame.
+  const [priorMode, setPriorMode] = useState(mode);
+  if (mode !== priorMode) {
+    setPriorMode(mode);
+    setIndex(0);
+  }
+
   // Auto-open when a new bonus is earned; auto-close once none are pending.
   useEffect(() => {
     if (pending > prevPending.current) openBonusChooser();
     if (pending === 0) closeBonusChooser();
     prevPending.current = pending;
   }, [pending, openBonusChooser, closeBonusChooser]);
-
-  // The two modes have different lists — restart the carousel when it switches.
-  useEffect(() => {
-    setIndex(0);
-  }, [mode]);
 
   // Never stack on top of the pack offer popup; it opens by itself once that closes.
   const visible = bonusChooserOpen && !packOfferOpen && pending > 0;
@@ -165,6 +170,7 @@ export function FreeJarPopup() {
 
             <button onClick={claim} className="btn-primary w-full gap-2">
               <Gift size={16} />
+              {/* "2 tincturi" copy assumes propolis is the only quantity-2 pack bonus. */}
               {mode === "pack" && packBonusQuantity(product) === 2
                 ? "Adaugă 2 tincturi gratuit în coș"
                 : "Adaugă gratuit în coș"}
