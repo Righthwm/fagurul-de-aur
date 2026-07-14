@@ -153,6 +153,11 @@ export const products: Product[] = [
     priceUnit: "1kg",
     variants: [
       { weight: "1kg", price: 30, weightKg: 1.4 },
+      // Keep the pack AFTER the 1kg jar. Several call sites fall back to
+      // variants[0] when they cannot match a variant by price — bonus lines are
+      // priced 0 and never match — and a pack in that slot would bill a free jar
+      // as ten jars of shipping.
+      { type: "Pachet 10 borcane (10kg)", price: 300, weightKg: 14, bonusPack: true },
     ],
     color: "#E8D44A",
     image: "/images/products/miere-rapita.webp",

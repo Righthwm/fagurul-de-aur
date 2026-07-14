@@ -4,6 +4,8 @@ export interface ProductVariant {
   price: number;
   /** Shipping weight in kg (gross, incl. jar + packaging). Used for courier tariff. */
   weightKg?: number;
+  /** Multi-jar pack granting its own bonus jar, separate from the per-kg promotion. */
+  bonusPack?: boolean;
 }
 
 export interface Product {
