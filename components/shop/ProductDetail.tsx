@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Minus, Plus, ShoppingBasket, CreditCard, MapPin, Leaf, Truck, Check, ChevronLeft, ChevronRight } from "lucide-react";
+import { BonusPackOffer } from "@/components/shop/BonusPackOffer";
 import { Badge } from "@/components/ui/Badge";
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import { useCartStore } from "@/lib/cart";
@@ -42,6 +43,7 @@ function ReviewItem({ author, city, rating, text, date }: { author: string; city
 
 export function ProductDetail({ product }: { product: Product }) {
   const [selectedVariant, setSelectedVariant] = useState(product.variants[0]);
+  const selectableVariants = product.variants.filter((v) => !v.bonusPack);
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState("descriere");
   const [addedAnim, setAddedAnim] = useState(false);
@@ -156,13 +158,13 @@ export function ProductDetail({ product }: { product: Product }) {
           <p className="text-text-secondary leading-relaxed mb-6">{product.description}</p>
 
           {/* Variant selector */}
-          {product.variants.length > 1 && (
+          {selectableVariants.length > 1 && (
             <div className="mb-6">
               <p className="text-text-muted text-xs uppercase tracking-widest font-body mb-2">
                 Gramaj
               </p>
               <div className="flex flex-wrap gap-2">
-                {product.variants.map((v) => (
+                {selectableVariants.map((v) => (
                   <button
                     key={v.price}
                     onClick={() => setSelectedVariant(v)}
@@ -239,6 +241,12 @@ export function ProductDetail({ product }: { product: Product }) {
               )}
             </motion.button>
           </div>
+
+          {product.id === "miere-rapita" && (
+            <div className="mt-5">
+              <BonusPackOffer />
+            </div>
+          )}
 
           {/* Buy now → straight to checkout */}
           <button onClick={handleBuyNow} className="btn-secondary w-full gap-2 mb-6">

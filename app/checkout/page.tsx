@@ -18,7 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { useCartStore } from "@/lib/cart";
-import { overclaimedFreeJars } from "@/lib/promo";
+import { orderableBonusKeys } from "@/lib/promo";
 import { couponDiscount } from "@/lib/coupons";
 import { formatPrice } from "@/lib/utils";
 import { HexPattern } from "@/components/ui/HexPattern";
@@ -84,16 +84,11 @@ function Field({
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCartStore();
-  // Exclude bonus jars the cart no longer qualifies for ("indisponibil momentan")
-  // from the order; the server re-validates the rest. The last `overclaimed`
-  // bonus lines are the unavailable ones.
-  const availableBonus = items.filter((i) => i.isBonus).length - overclaimedFreeJars(items);
-  let bonusSeen = 0;
-  const orderableItems = items.filter((i) => {
-    if (!i.isBonus) return true;
-    return bonusSeen++ < availableBonus;
-  });
-  const orderableKeys = new Set(orderableItems.filter((i) => i.isBonus).map((i) => i.bonusKey));
+  // Exclude bonus lines the cart no longer qualifies for ("indisponibil momentan")
+  // from the order; the server re-validates the rest. Shared with the cart drawer
+  // so both agree on which bonus lines are available.
+  const orderableKeys = orderableBonusKeys(items);
+  const orderableItems = items.filter((i) => !i.isBonus || orderableKeys.has(i.bonusKey!));
   const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -264,6 +259,7 @@ export default function CheckoutPage() {
         unitPrice: i.selectedVariant.price,
         quantity: i.quantity,
         isBonus: i.isBonus,
+        bonusSource: i.bonusSource,
       })),
     };
 
@@ -558,7 +554,8 @@ export default function CheckoutPage() {
                 <ul className="space-y-3 mb-5 max-h-72 overflow-y-auto pr-1">
                   {items.map((item) => {
                     const variantLabel = item.selectedVariant.weight ?? item.selectedVariant.type ?? "";
-                    const bonusUnavailable = item.isBonus && !orderableKeys.has(item.bonusKey);
+                    const bonusUnavailable =
+                      item.isBonus && (item.bonusKey == null || !orderableKeys.has(item.bonusKey));
                     return (
                       <li
                         key={item.isBonus ? `bonus-${item.bonusKey}` : `${item.product.id}-${item.selectedVariant.price}`}

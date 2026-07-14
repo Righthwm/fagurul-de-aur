@@ -5,11 +5,20 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Gift, Sparkles, ChevronLeft, ChevronRight, X } from "lucide-react";
 import { useCartStore } from "@/lib/cart";
 import { products } from "@/lib/products";
-import { isHoney, unclaimedFreeJars } from "@/lib/promo";
+import {
+  isHoney,
+  isPackBonusEligible,
+  packBonusQuantity,
+  unclaimedFreeJars,
+  unclaimedPackBonuses,
+} from "@/lib/promo";
 import { ProductVisual } from "@/components/ui/ProductVisual";
+import type { BonusSource } from "@/types";
 
-// Only honey jars can be claimed as the free jar (propolis is excluded).
+// Per-kg promotion: any honey jar. Propolis is excluded.
 const honeyProducts = products.filter(isHoney);
+// Pack bonus: every honey except salcam, plus the propolis tincture.
+const packBonusProducts = products.filter(isPackBonusEligible);
 
 /**
  * Celebratory "you earned a free jar" popup. Auto-opens whenever the cart earns
@@ -19,30 +28,48 @@ const honeyProducts = products.filter(isHoney);
 export function FreeJarPopup() {
   const items = useCartStore((s) => s.items);
   const bonusChooserOpen = useCartStore((s) => s.bonusChooserOpen);
+  const packOfferOpen = useCartStore((s) => s.packOfferOpen);
   const openBonusChooser = useCartStore((s) => s.openBonusChooser);
   const closeBonusChooser = useCartStore((s) => s.closeBonusChooser);
   const addBonusItem = useCartStore((s) => s.addBonusItem);
   const openCart = useCartStore((s) => s.openCart);
 
-  const unclaimed = unclaimedFreeJars(items);
+  const kgPending = unclaimedFreeJars(items);
+  const packPending = unclaimedPackBonuses(items);
+  const pending = kgPending + packPending;
+  // The per-kg claim comes first; the pack bonus follows in the same window.
+  const mode: BonusSource = kgPending > 0 ? "kg" : "pack";
+  const choices = mode === "kg" ? honeyProducts : packBonusProducts;
+
   const [index, setIndex] = useState(0);
-  const prevUnclaimed = useRef(0);
+  const prevPending = useRef(0);
 
-  // Auto-open when a new free jar is earned; auto-close once none are pending.
+  // Restart the carousel when the mode switches. Done during render (not in an
+  // effect) so the reset lands before paint — otherwise the first render after a
+  // claim reads the old index against the new mode's list and the keyed carousel
+  // flickers to the wrong product for one frame.
+  const [priorMode, setPriorMode] = useState(mode);
+  if (mode !== priorMode) {
+    setPriorMode(mode);
+    setIndex(0);
+  }
+
+  // Auto-open when a new bonus is earned; auto-close once none are pending.
   useEffect(() => {
-    if (unclaimed > prevUnclaimed.current) openBonusChooser();
-    if (unclaimed === 0) closeBonusChooser();
-    prevUnclaimed.current = unclaimed;
-  }, [unclaimed, openBonusChooser, closeBonusChooser]);
+    if (pending > prevPending.current) openBonusChooser();
+    if (pending === 0) closeBonusChooser();
+    prevPending.current = pending;
+  }, [pending, openBonusChooser, closeBonusChooser]);
 
-  const visible = bonusChooserOpen && unclaimed > 0;
-  const product = honeyProducts[index];
+  // Never stack on top of the pack offer popup; it opens by itself once that closes.
+  const visible = bonusChooserOpen && !packOfferOpen && pending > 0;
+  const product = choices[index] ?? choices[0];
 
-  const prev = () => setIndex((i) => (i - 1 + honeyProducts.length) % honeyProducts.length);
-  const next = () => setIndex((i) => (i + 1) % honeyProducts.length);
+  const prev = () => setIndex((i) => (i - 1 + choices.length) % choices.length);
+  const next = () => setIndex((i) => (i + 1) % choices.length);
 
   const claim = () => {
-    addBonusItem(product);
+    addBonusItem(product, mode);
     openCart();
   };
 
@@ -63,7 +90,7 @@ export function FreeJarPopup() {
           <motion.div
             role="dialog"
             aria-modal="true"
-            aria-label="Alege borcanul gratuit"
+            aria-label={mode === "kg" ? "Alege borcanul gratuit" : "Alege bonusul pachetului"}
             initial={{ opacity: 0, scale: 0.9, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.9, y: 20 }}
@@ -85,10 +112,13 @@ export function FreeJarPopup() {
               <Sparkles size={16} />
             </div>
             <h2 className="font-heading text-2xl text-text-primary">
-              Felicitări! Ați câștigat un borcan gratuit
+              {mode === "kg"
+                ? "Felicitări! Ați câștigat un borcan gratuit"
+                : "Bonus pachet rapiță"}
             </h2>
             <p className="text-text-secondary text-sm mt-2 mb-6">
-              Alegeți ce miere doriți{unclaimed > 1 ? ` (${unclaimed} borcane de ales)` : ""}.
+              {mode === "kg" ? "Alegeți ce miere doriți" : "Alegeți bonusul — fără salcâm"}
+              {pending > 1 ? ` (${pending} de ales)` : ""}.
             </p>
 
             {/* Jar carousel */}
@@ -128,7 +158,7 @@ export function FreeJarPopup() {
 
             {/* Dots */}
             <div className="flex justify-center gap-1.5 mt-4 mb-6" aria-hidden="true">
-              {honeyProducts.map((p, i) => (
+              {choices.map((p, i) => (
                 <span
                   key={p.id}
                   className={`h-1.5 rounded-full transition-all ${
@@ -140,7 +170,10 @@ export function FreeJarPopup() {
 
             <button onClick={claim} className="btn-primary w-full gap-2">
               <Gift size={16} />
-              Adaugă gratuit în coș
+              {/* "2 tincturi" copy assumes propolis is the only quantity-2 pack bonus. */}
+              {mode === "pack" && packBonusQuantity(product) === 2
+                ? "Adaugă 2 tincturi gratuit în coș"
+                : "Adaugă gratuit în coș"}
             </button>
           </motion.div>
         </>

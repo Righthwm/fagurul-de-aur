@@ -44,6 +44,13 @@ describe("estimateShipping", () => {
     const result = await estimateShipping({ items: many, ...urban });
     expect(result.cost).toBe(86); // 30 + (10×5 + 2×3)
   });
+
+  it("counts the 10-jar rapita pack as 10 jars", async () => {
+    const pack = [{ productId: "miere-rapita", variantPrice: 300, quantity: 1 }];
+    const result = await estimateShipping({ items: pack, ...urban });
+    expect(result.cost).toBe(80); // 30 flat + 10×5, exactly at the threshold
+    expect(result.weightKg).toBe(14); // 10 jars × 1.4kg gross
+  });
 });
 
 describe("provisional shipping config", () => {

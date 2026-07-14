@@ -2,7 +2,7 @@
 
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import type { CartItem, Product, ProductVariant } from "@/types";
+import type { BonusSource, CartItem, Product, ProductVariant } from "@/types";
 import { products } from "@/lib/products";
 import {
   variantHoneyKg,
@@ -10,6 +10,11 @@ import {
   claimedFreeJars,
   unclaimedFreeJars,
   overclaimedFreeJars,
+  earnedPackBonuses,
+  claimedPackBonuses,
+  unclaimedPackBonuses,
+  overclaimedPackBonuses,
+  packBonusQuantity,
 } from "@/lib/promo";
 
 // Re-exported from the framework-neutral constants module (this file is
@@ -35,10 +40,18 @@ function reconcileItems(items: CartItem[]): CartItem[] {
           (saved.type != null && v.type === saved.type)
       ) ?? product.variants[0];
 
-    // Bonus jars are always a free 1kg jar — keep them at price 0 after refresh
-    // so a catalog price change can never turn a free jar into a paid one.
+    // Bonus lines are always free — keep them at price 0 after refresh so a
+    // catalog price change can never turn a free line into a paid one. Lines
+    // persisted before pack bonuses existed carry no source; they were per-kg.
     if (item.isBonus) {
-      return [{ ...item, product, selectedVariant: { ...variant, price: 0 } }];
+      return [
+        {
+          ...item,
+          product,
+          selectedVariant: { ...variant, price: 0 },
+          bonusSource: item.bonusSource ?? "kg",
+        },
+      ];
     }
 
     return [{ ...item, product, selectedVariant: variant }];
@@ -50,11 +63,16 @@ interface CartState {
   isOpen: boolean;
   /** Whether the "choose your free jar" popup is showing. */
   bonusChooserOpen: boolean;
+  /** Whether the pack offer popup ("pick one more jar") is showing. It suppresses
+   *  the free-jar chooser so the two never stack. */
+  packOfferOpen: boolean;
   addItem: (product: Product, variant: ProductVariant, quantity?: number) => void;
-  addBonusItem: (product: Product) => void;
+  addBonusItem: (product: Product, source?: BonusSource) => void;
   removeBonusItem: (bonusKey: number) => void;
   openBonusChooser: () => void;
   closeBonusChooser: () => void;
+  openPackOffer: () => void;
+  closePackOffer: () => void;
   removeItem: (productId: string, variantPrice: number) => void;
   updateQuantity: (productId: string, variantPrice: number, quantity: number) => void;
   clearCart: () => void;
@@ -71,6 +89,14 @@ interface CartState {
   /** Free jars claimed beyond what the cart now qualifies for (shown as
    *  "indisponibil momentan" and dropped at checkout). */
   overclaimedFreeJars: () => number;
+  /** Pack bonuses the cart qualifies for (1 per pack, once a trigger jar exists). */
+  earnedPackBonuses: () => number;
+  /** Pack bonuses already in the cart. */
+  claimedPackBonuses: () => number;
+  /** A pack bonus is waiting to be chosen. */
+  unclaimedPackBonuses: () => number;
+  /** Pack bonuses claimed beyond the entitlement. */
+  overclaimedPackBonuses: () => number;
 }
 
 export const useCartStore = create<CartState>()(
@@ -79,9 +105,13 @@ export const useCartStore = create<CartState>()(
       items: [],
       isOpen: false,
       bonusChooserOpen: false,
+      packOfferOpen: false,
 
       addItem: (product, variant, quantity = 1) => {
         set((state) => {
+          // Paid adds only. Bonus lines must never merge through this path — each
+          // gets its own line via addBonusItem — because pack-bonus accounting
+          // counts lines, not units, and every bonus line shares price 0.
           const existing = state.items.find(
             (i) => i.product.id === product.id && i.selectedVariant.price === variant.price
           );
@@ -100,20 +130,23 @@ export const useCartStore = create<CartState>()(
         });
       },
 
-      // Add a free 1kg jar of the chosen honey (price 0). Each earned jar is its
-      // own line so availability ("indisponibil momentan") is tracked per line.
-      addBonusItem: (product) => {
+      // Add a free line of the chosen product (price 0). Each claim is its own
+      // line so availability ("indisponibil momentan") is tracked per line. The
+      // propolis pack bonus is a single line of 2 tinctures.
+      addBonusItem: (product, source = "kg") => {
         const base =
           product.variants.find((v) => variantHoneyKg(v) === 1) ?? product.variants[0];
         const bonusVariant: ProductVariant = { ...base, price: 0 };
+        const quantity = source === "pack" ? packBonusQuantity(product) : 1;
         set((state) => ({
           items: [
             ...state.items,
             {
               product,
-              quantity: 1,
+              quantity,
               selectedVariant: bonusVariant,
               isBonus: true,
+              bonusSource: source,
               bonusKey: Date.now() + Math.floor(Math.random() * 1000),
             },
           ],
@@ -126,6 +159,8 @@ export const useCartStore = create<CartState>()(
 
       openBonusChooser: () => set({ bonusChooserOpen: true }),
       closeBonusChooser: () => set({ bonusChooserOpen: false }),
+      openPackOffer: () => set({ packOfferOpen: true }),
+      closePackOffer: () => set({ packOfferOpen: false }),
 
       removeItem: (productId, variantPrice) => {
         set((state) => ({
@@ -161,6 +196,10 @@ export const useCartStore = create<CartState>()(
       claimedFreeJars: () => claimedFreeJars(get().items),
       unclaimedFreeJars: () => unclaimedFreeJars(get().items),
       overclaimedFreeJars: () => overclaimedFreeJars(get().items),
+      earnedPackBonuses: () => earnedPackBonuses(get().items),
+      claimedPackBonuses: () => claimedPackBonuses(get().items),
+      unclaimedPackBonuses: () => unclaimedPackBonuses(get().items),
+      overclaimedPackBonuses: () => overclaimedPackBonuses(get().items),
     }),
     {
       name: "fagurul-de-aur-cart",
