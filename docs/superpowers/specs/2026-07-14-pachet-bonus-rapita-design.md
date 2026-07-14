@@ -24,24 +24,36 @@ borcan bonus. Bonusul pachetului are reguli proprii, diferite de promoția norma
 | Plasare buton | Pagina `/miere` și pagina produsului rapiță. |
 | Declanșator bonus pachet | Orice **borcan de miere plătit** non-pachet (inclusiv rapiță sau salcâm). Propolisul nu declanșează. Borcanele gratuite nu declanșează. |
 | Pachete multiple | **1 bonus per pachet.** Un singur borcan plătit non-pachet deblochează toate bonusurile de pachet. |
+| Text buton | Pe patru rânduri: „Pachet 10 borcane rapiță" / „300 lei" / „1 borcan GRATIS acum" / „+1 GRATIS dacă mai adaugi unul". Butonul spune tot adevărul, ca nimeni să nu se simtă înșelat în coș. |
+| Când intră pachetul în coș | **La click pe buton**, imediat. Popupul care urmează cere borcanul în plus, nu confirmarea pachetului. |
+| Salcâm gratuit | Prima gratuitate (promoția normală de 10kg) **poate** fi salcâm — regula existentă rămâne neatinsă. A doua (bonusul de pachet) **nu poate**. |
+| Închiderea popupului fără alegere | Pachetul rămâne în coș cu bonusul normal. Bonusul de pachet se acordă oricând mai târziu, când adaugă un borcan — chiar și din altă pagină. |
 
 ## Comportament așteptat (contractul funcțional)
 
-| Acțiune | Stare coș | Rezultat |
-|---|---|---|
-| Adaugă pachetul (300 lei, 10kg) | 10kg plătit, 0 borcane non-pachet | Popup **kg**: orice miere, **inclusiv salcâm** → 1 borcan gratuit. Bonusul de pachet **nu** se declanșează încă. |
-| Adaugă 1 borcan tei (30 lei) | 11kg plătit, 1 borcan non-pachet | `floor(11/10) = 1` → bonusul kg rămâne 1 (deja revendicat). Bonusul de pachet se deblochează → popup **pachet**: fără salcâm, cu propolis. |
-| **Total** | **330 lei plătiți** | **2 produse gratuite** |
+Fluxul principal, exact 2 popupuri:
+
+| Pas | Acțiune | Stare coș | Ecran |
+|---|---|---|---|
+| 1 | Click pe buton | Pachetul (300 lei, 10kg) intră în coș | — |
+| 2 | — | 10kg plătit, 0 borcane non-pachet | **Popup 1** — catalogul: „Mai alege un borcan și mai primești unul gratis". Bonusul kg e deja câștigat, dar alegerea lui e **suspendată** cât timp popupul 1 e deschis. |
+| 3 | Alege un borcan din catalog | 11kg plătit, 1 borcan non-pachet | Borcanul plătit (30 lei) intră în coș. Bonusul de pachet se deblochează. |
+| 4 | — | 2 gratuități în așteptare | **Popup 2** — alegerea: întâi bonusul kg (**salcâm permis**), apoi bonusul de pachet (**fără salcâm**, cu propolis). Aceeași fereastră, secvențial. |
+| | **Total** | **330 lei plătiți** | **2 produse gratuite** |
 
 Alte cazuri:
 
+- **Popup 1 închis fără alegere** → popupul 2 apare oricum, cu **o singură** gratuitate
+  de ales (cea de la promoția de 10kg). Bonusul de pachet rămâne în așteptare până
+  când adaugă un borcan de miere plătit, oricând, din orice pagină.
 - 2 pachete + 1 borcan tei = 21kg → 2 bonusuri kg + 2 bonusuri pachet = **4 gratuite**.
 - Pachet + propolis, fără borcan de miere → **doar** bonusul kg. Propolisul nu deblochează bonusul de pachet.
 - Se alege propolisul ca bonus de pachet → **o singură linie, cantitate 2**, preț 0.
 - Se scoate borcanul declanșator după revendicare → bonusul de pachet devine
   „indisponibil momentan" în coș și e eliminat la checkout (tiparul existent pentru
   bonusurile revendicate în exces).
-- Dacă ambele bonusuri sunt în așteptare, popupurile apar secvențial: întâi **kg**, apoi **pachet**.
+- Bonusul de pachet se poate obține și fără popupul 1: dacă în coș există deja un
+  borcan de miere plătit când se adaugă pachetul, se deblochează imediat.
 
 ## Arhitectură
 
@@ -168,38 +180,70 @@ Regula existentă „doar liniile bonus pot avea preț 0" rămâne neschimbată.
   selecția variantei devine „prima variantă a produsului" când nu există variantă de 1kg.
 - Selectoarele noi: `earnedPackBonuses`, `claimedPackBonuses`, `unclaimedPackBonuses`,
   `overclaimedPackBonuses`.
+- Stare nouă pentru popupul 1: `packOfferOpen: boolean`, cu `openPackOffer()` /
+  `closePackOffer()`. Trăiește în store (nu local în componentă) fiindcă
+  `FreeJarPopup` trebuie să o citească pentru a se suspenda.
 - **Migrare `reconcileItems`:** coșurile deja salvate în localStorage au `isBonus`
   fără `bonusSource`. La rehidratare, liniile bonus fără sursă primesc
   `bonusSource: "kg"` — altfel bonusurile vechi ar fi numărate greșit.
   Liniile bonus rămân forțate la preț 0, ca acum.
 
-### 5. Popup (`components/shop/FreeJarPopup.tsx`)
+### 5. Popupul 2 — alegerea gratuităților (`components/shop/FreeJarPopup.tsx`)
 
 Extindem componenta existentă cu un **mod**, nu creăm una nouă — caruselul, dots-urile
-și animațiile sunt identice.
+și animațiile sunt identice. Componenta știe deja să rămână deschisă cât timp mai
+există gratuități nerevendicate (`visible = bonusChooserOpen && unclaimed > 0`), deci
+cele două alegeri se fac natural în aceeași fereastră, una după alta.
 
 - Modul se derivă din stare: `unclaimedFreeJars > 0` → mod `"kg"`; altfel
-  `unclaimedPackBonuses > 0` → mod `"pack"`. Kg are prioritate, deci popupurile apar
-  secvențial.
+  `unclaimedPackBonuses > 0` → mod `"pack"`. Kg are prioritate, deci alegerile vin în
+  ordinea din contractul funcțional.
 - Lista de produse per mod: `"kg"` → mierile (comportamentul actual, salcâm inclus);
   `"pack"` → `products.filter(isPackBonusEligible)` (fără salcâm, cu propolis).
+- Contorul din titlu („N borcane de ales") însumează **ambele** rezervoare:
+  `unclaimedFreeJars + unclaimedPackBonuses`.
 - Indexul caruselului se resetează la schimbarea modului, ca să nu rămână pe un
   index invalid între liste de lungimi diferite.
 - Text în modul `"pack"`: titlu „Bonus pachet rapiță", iar pentru propolis butonul
   indică explicit că se adaugă 2 tincturi.
 - `claim()` apelează `addBonusItem(product, mode)`.
 
-### 6. Ofertă (`components/shop/BonusPackOffer.tsx` — nouă)
+**Suspendarea cât timp popupul 1 e deschis.** Condiția de afișare devine:
 
-Componentă client:
+```ts
+visible = bonusChooserOpen && !packOfferOpen && pending > 0;
+```
 
-- Buton: „Pachet 10 borcane rapiță +BONUS".
-- La click → modal cu mesajul: „Adaugi pachetul de 10 kg de rapiță în coș, iar la
-  următorul borcan adăugat în coș din orice sortiment mai primești BONUS un borcan
-  gratuit."
-- Sub mesaj → butonul „Adaugă în coș pachetul bonus", care apelează
-  `addItem(rapita, packVariant)`, închide modalul și deschide coșul.
-- Montată în pagina `/miere` și în pagina produsului rapiță.
+Efectul de auto-deschidere rămâne neschimbat (setează `bonusChooserOpen` când crește
+numărul de gratuități în așteptare). Fiindcă randarea e blocată de `!packOfferOpen`,
+popupul 2 pur și simplu nu apare peste popupul 1, iar când acesta se închide — fie
+prin alegerea unui borcan, fie prin X — popupul 2 apare singur, cu numărul corect de
+gratuități. O singură condiție rezolvă ambele ramuri, fără efecte în lanț.
+
+### 6. Popupul 1 — oferta (`components/shop/BonusPackOffer.tsx` — nouă)
+
+Componentă client, montată în pagina `/miere` și în pagina produsului rapiță.
+
+**Butonul** (patru rânduri, ca în decizia clientului):
+
+```
+Pachet 10 borcane rapiță
+300 lei
+✦ 1 borcan GRATIS acum
+✦ +1 GRATIS dacă mai adaugi unul
+```
+
+**La click:** `addItem(rapita, packVariant)` + `openPackOffer()`. Pachetul e în coș
+din acest moment; popupul nu mai cere confirmare pentru el.
+
+**Conținutul popupului:** mesajul „Mai alege un borcan din catalog și mai primești un
+borcan gratis", urmat de catalogul mierilor la 1kg (toate sortimentele, inclusiv
+salcâm și rapiță). Click pe un borcan → `addItem(product, variantă 1kg)` +
+`closePackOffer()`. Butonul X → doar `closePackOffer()`.
+
+Popupul refolosește shell-ul vizual din `FreeJarPopup` (overlay, animații, buton de
+închidere), dar afișează o **grilă** de borcane, nu un carusel — clientul alege dintre
+6 sortimente și trebuie să le vadă pe toate deodată, nu să navigheze prin ele.
 
 ### 7. Checkout (`app/checkout/page.tsx`)
 
@@ -214,6 +258,10 @@ linie bonus.
 
 - pachet singur → 1 bonus kg, 0 bonusuri pachet (fără declanșator);
 - pachet + 1 borcan tei → 1 bonus kg + 1 bonus pachet;
+- borcan de miere deja în coș, apoi se adaugă pachetul → bonusul de pachet se
+  deblochează imediat, fără popupul 1;
+- pachet + 1 borcan rapiță de 1kg → bonusul de pachet se deblochează (rapița
+  non-pachet e declanșator valid);
 - pachet + propolis (fără miere) → 0 bonusuri pachet;
 - 2 pachete + 1 borcan → 2 bonusuri kg + 2 bonusuri pachet;
 - revendicările pe cele două rezervoare nu se contaminează reciproc;
