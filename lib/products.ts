@@ -13,10 +13,7 @@ export const products: Product[] = [
       "Mierea de salcâm este una dintre cele mai apreciate și rafinate soiuri de miere naturală din lume. Recoltată din florile albe, parfumate, ale salcâmilor din câmpiile și dealurile României, se distinge prin culoarea aproape transparentă și gustul delicat floral care persistă subtil pe palat.\n\n## Proprietățile mierii de salcâm\n\nDatorită conținutului ridicat de fructoză, mierea de salcâm cristalizează foarte lent, menținându-și forma lichidă ani întregi. Această caracteristică o face ideală pentru îndulcit ceaiuri, preparate culinare și băuturi reci, fără a altera gustul rețetei. Aroma fină și aciditatea scăzută o fac blândă cu stomacul.\n\n## Recoltată manual, extrasă la rece\n\nFagurul de Aur recoltează mierea de salcâm exclusiv în perioada înfloririi, între mai și iunie, când florile sunt la apogeu. Extracția este manuală, prin centrifugare la rece, fără procesare chimică sau termică — astfel mierea rămâne crudă și neîncălzită, cu enzimele, polenul și aromele naturale intacte.\n\n## Beneficii și pentru cine este potrivită\n\nBogată în antioxidanți, flavonoide și compuși cu rol antibacterian natural, mierea de salcâm susține organismul și oferă energie de durată. Este ideală pentru copii, sportivi și pentru oricine face trecerea de la zahăr la o miere naturală pură. Comandă miere de salcâm direct de la stupină, cu livrare în 24–48h.",
     price: 45,
     priceUnit: "1kg",
-    variants: [
-      { weight: "1kg", price: 45, weightKg: 1.4 },
-      { type: "Pachet 5 borcane (5kg)", price: 200, weightKg: 7 },
-    ],
+    variants: [{ weight: "1kg", price: 45, weightKg: 1.4 }],
     color: "#E8C44A",
     image: "/images/products/miere-salcam.webp",
     badge: "Bestseller",

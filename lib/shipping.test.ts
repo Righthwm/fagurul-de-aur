@@ -39,12 +39,6 @@ describe("estimateShipping", () => {
     expect(result.weightKg).toBe(3.0);
   });
 
-  it("counts a multi-jar pack by its jar count (5 borcane = 5 jars)", async () => {
-    const pack = [{ productId: "miere-salcam", variantPrice: 200, quantity: 2 }]; // 2 packs × 5 jars
-    const result = await estimateShipping({ items: pack, ...urban });
-    expect(result.cost).toBe(80); // 30 + 10×5 (exactly at the threshold)
-  });
-
   it("charges only 3 lei per honey jar beyond the 10-jar (10 kg) threshold", async () => {
     const many = [{ productId: "miere-salcam", variantPrice: 45, quantity: 12 }]; // 12 × 1kg jars
     const result = await estimateShipping({ items: many, ...urban });
