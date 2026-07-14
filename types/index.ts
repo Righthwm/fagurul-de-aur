@@ -47,12 +47,18 @@ export interface Review {
   date: string;
 }
 
+/** Which promotion granted a free line: the per-kg promo or a bonus pack. */
+export type BonusSource = "kg" | "pack";
+
 export interface CartItem {
   product: Product;
   quantity: number;
   selectedVariant: ProductVariant;
-  /** A free jar earned through the "al 11-lea gratuit" promotion (price 0). */
+  /** A free line earned through a promotion (price 0). */
   isBonus?: boolean;
+  /** Which promotion granted it. Absent on paid items, and absent on bonus lines
+   *  persisted before pack bonuses existed — treat those as "kg". */
+  bonusSource?: BonusSource;
   /** Unique id for a bonus line (bonus jars all share price 0, so they need
    *  their own identity for removal). Absent on paid items. */
   bonusKey?: number;

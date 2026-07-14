@@ -6,16 +6,41 @@ import {
   claimedFreeJars,
   overclaimedFreeJars,
   unclaimedFreeJars,
+  packCount,
+  paidNonPackHoneyJars,
+  earnedPackBonuses,
+  claimedPackBonuses,
+  unclaimedPackBonuses,
+  isPackBonusEligible,
+  packBonusQuantity,
 } from "./promo";
 import { products } from "./products";
-import type { CartItem, ProductVariant } from "@/types";
+import type { BonusSource, CartItem, ProductVariant } from "@/types";
 
 const honey = (id: string) => products.find((p) => p.id === id)!;
 const jar1kg: ProductVariant = { weight: "1kg", price: 30, weightKg: 1.4 };
 const pack5kg: ProductVariant = { type: "Pachet 5 borcane (5kg)", price: 200, weightKg: 7 };
+const pack10kg: ProductVariant = {
+  type: "Pachet 10 borcane (10kg)",
+  price: 300,
+  weightKg: 14,
+  bonusPack: true,
+};
+const propolis20ml: ProductVariant = { weight: "20ml", price: 15, weightKg: 0.2 };
 
 function line(id: string, variant: ProductVariant = jar1kg, quantity = 1, isBonus = false): CartItem {
   return { product: honey(id), quantity, selectedVariant: variant, isBonus };
+}
+
+function bonusLine(id: string, source: BonusSource, quantity = 1): CartItem {
+  return {
+    product: honey(id),
+    quantity,
+    selectedVariant: { ...jar1kg, price: 0 },
+    isBonus: true,
+    bonusSource: source,
+    bonusKey: Math.random(),
+  };
 }
 
 describe("variantHoneyKg", () => {
@@ -75,5 +100,109 @@ describe("earned / claimed / overclaimed / unclaimed", () => {
     const cart = [line("miere-tei", jar1kg, 8), line("miere-munte", jar1kg, 1, true)];
     expect(earnedFreeJars(cart)).toBe(0);
     expect(overclaimedFreeJars(cart)).toBe(1);
+  });
+});
+
+describe("earnedPackBonuses", () => {
+  it("is locked until a non-pack honey jar is in the cart", () => {
+    expect(earnedPackBonuses([line("miere-rapita", pack10kg)])).toBe(0);
+  });
+
+  it("unlocks one bonus once a paid honey jar is added", () => {
+    const cart = [line("miere-rapita", pack10kg), line("miere-tei", jar1kg)];
+    expect(earnedPackBonuses(cart)).toBe(1);
+  });
+
+  it("accepts a paid 1kg rapita jar as the trigger", () => {
+    const cart = [line("miere-rapita", pack10kg), line("miere-rapita", jar1kg)];
+    expect(earnedPackBonuses(cart)).toBe(1);
+  });
+
+  it("grants one bonus per pack, unlocked by a single jar", () => {
+    const cart = [line("miere-rapita", pack10kg, 2), line("miere-tei", jar1kg)];
+    expect(earnedPackBonuses(cart)).toBe(2);
+  });
+
+  it("is not unlocked by propolis", () => {
+    const cart = [line("miere-rapita", pack10kg), line("tinctura-propolis", propolis20ml)];
+    expect(earnedPackBonuses(cart)).toBe(0);
+  });
+
+  it("is not unlocked by a free jar", () => {
+    const cart = [line("miere-rapita", pack10kg), bonusLine("miere-tei", "kg")];
+    expect(earnedPackBonuses(cart)).toBe(0);
+  });
+});
+
+describe("pack and kg pools cumulate", () => {
+  it("earns one kg jar and one pack bonus for a pack plus one jar", () => {
+    const cart = [line("miere-rapita", pack10kg), line("miere-tei", jar1kg)];
+    expect(paidHoneyKg(cart)).toBe(11);
+    expect(earnedFreeJars(cart)).toBe(1);
+    expect(earnedPackBonuses(cart)).toBe(1);
+  });
+
+  it("does not let a kg claim consume the pack entitlement", () => {
+    const cart = [
+      line("miere-rapita", pack10kg),
+      line("miere-tei", jar1kg),
+      bonusLine("miere-salcam", "kg"),
+    ];
+    expect(unclaimedFreeJars(cart)).toBe(0);
+    expect(unclaimedPackBonuses(cart)).toBe(1);
+  });
+
+  it("counts a 2-tincture propolis bonus as a single pack claim", () => {
+    const cart = [
+      line("miere-rapita", pack10kg),
+      line("miere-tei", jar1kg),
+      bonusLine("tinctura-propolis", "pack", 2),
+    ];
+    expect(claimedPackBonuses(cart)).toBe(1);
+    expect(unclaimedPackBonuses(cart)).toBe(0);
+  });
+
+  it("treats a legacy bonus line with no source as a per-kg jar", () => {
+    const legacy: CartItem = {
+      product: honey("miere-tei"),
+      quantity: 1,
+      selectedVariant: { ...jar1kg, price: 0 },
+      isBonus: true,
+    };
+    const cart = [line("miere-tei", jar1kg, 10), legacy];
+    expect(claimedFreeJars(cart)).toBe(1);
+    expect(claimedPackBonuses(cart)).toBe(0);
+  });
+});
+
+describe("packCount / paidNonPackHoneyJars", () => {
+  it("counts paid packs only", () => {
+    expect(packCount([line("miere-rapita", pack10kg, 2)])).toBe(2);
+  });
+
+  it("excludes pack jars from the trigger count", () => {
+    const cart = [line("miere-rapita", pack10kg), line("miere-tei", jar1kg, 3)];
+    expect(paidNonPackHoneyJars(cart)).toBe(3);
+  });
+});
+
+describe("isPackBonusEligible", () => {
+  it("excludes salcam", () => {
+    expect(isPackBonusEligible(honey("miere-salcam"))).toBe(false);
+  });
+  it("includes other honey", () => {
+    expect(isPackBonusEligible(honey("miere-tei"))).toBe(true);
+  });
+  it("includes propolis", () => {
+    expect(isPackBonusEligible(honey("tinctura-propolis"))).toBe(true);
+  });
+});
+
+describe("packBonusQuantity", () => {
+  it("grants 2 propolis tinctures", () => {
+    expect(packBonusQuantity(honey("tinctura-propolis"))).toBe(2);
+  });
+  it("grants 1 honey jar", () => {
+    expect(packBonusQuantity(honey("miere-tei"))).toBe(1);
   });
 });
