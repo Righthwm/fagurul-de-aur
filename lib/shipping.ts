@@ -47,7 +47,7 @@ export function honeyJarCount(items: CartLineInput[]): number {
 }
 
 export interface ShippingResult {
-  /** Delivery fee (lei): flat locality fee (30 urban / 50 rural) + tiered per-jar surcharge. */
+  /** Delivery fee (lei): flat locality fee (30 urban / 50 rural) + flat per-jar surcharge. */
   cost: number;
   /** Gross parcel weight (kg), informative only — the fee no longer depends on it. */
   weightKg: number;
@@ -65,7 +65,7 @@ export interface EstimateInput {
 /**
  * Authoritative shipping calculation, shared by the estimate endpoint and the
  * checkout route. A flat two-tier locality fee (30 lei city / 50 lei village)
- * plus a per-honey-jar surcharge: 5 lei each up to 10 jars, 3 lei each beyond.
+ * plus a flat per-honey-jar surcharge: 2 lei per jar, at any count.
  */
 export async function estimateShipping(input: EstimateInput): Promise<ShippingResult> {
   const weightKg = packageWeightKg(input.items);
