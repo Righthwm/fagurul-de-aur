@@ -49,7 +49,7 @@ export function BonusPackOffer() {
         <span className="font-heading text-lg text-text-primary">
           Pachet 10 borcane rapiță
         </span>
-        <span className="font-heading text-2xl text-gold-300">300 lei</span>
+        <span className="font-heading text-2xl text-gold-300">{packVariant.price} lei</span>
         <span className="mt-1 text-sm text-text-secondary">
           <span aria-hidden="true">✦ </span>1 borcan{" "}
           <strong className="text-gold-300">GRATIS</strong> acum
