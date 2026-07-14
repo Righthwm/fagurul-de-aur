@@ -11,6 +11,7 @@ import {
   earnedPackBonuses,
   claimedPackBonuses,
   unclaimedPackBonuses,
+  overclaimedPackBonuses,
   isPackBonusEligible,
   packBonusQuantity,
 } from "./promo";
@@ -131,6 +132,32 @@ describe("earnedPackBonuses", () => {
   it("is not unlocked by a free jar", () => {
     const cart = [line("miere-rapita", pack10kg), bonusLine("miere-tei", "kg")];
     expect(earnedPackBonuses(cart)).toBe(0);
+  });
+});
+
+describe("overclaimedPackBonuses", () => {
+  it("strands the claim when the trigger jar is removed", () => {
+    const cart = [line("miere-rapita", pack10kg), bonusLine("miere-tei", "pack")];
+    expect(earnedPackBonuses(cart)).toBe(0);
+    expect(overclaimedPackBonuses(cart)).toBe(1);
+    expect(unclaimedPackBonuses(cart)).toBe(0);
+  });
+
+  it("strands the claim when the pack itself is removed", () => {
+    const cart = [line("miere-tei", jar1kg), bonusLine("miere-tei", "pack")];
+    expect(earnedPackBonuses(cart)).toBe(0);
+    expect(overclaimedPackBonuses(cart)).toBe(1);
+    expect(unclaimedPackBonuses(cart)).toBe(0);
+  });
+
+  it("is settled while the pack and its trigger jar are both present", () => {
+    const cart = [
+      line("miere-rapita", pack10kg),
+      line("miere-tei", jar1kg),
+      bonusLine("miere-tei", "pack"),
+    ];
+    expect(overclaimedPackBonuses(cart)).toBe(0);
+    expect(unclaimedPackBonuses(cart)).toBe(0);
   });
 });
 

@@ -75,7 +75,9 @@ export function isPackVariant(variant: ProductVariant): boolean {
   return variant.bonusPack === true;
 }
 
-/** How many paid packs are in the cart. */
+/** How many paid packs are in the cart. Honey-agnostic on purpose: any variant
+ *  flagged bonusPack counts, so a future non-honey pack earns its bonus without
+ *  a change here. Only rapița has the flag today. */
 export function packCount(items: CartItem[]): number {
   return items.reduce((sum, i) => {
     if (i.isBonus || !isPackVariant(i.selectedVariant)) return sum;
@@ -92,13 +94,20 @@ export function paidNonPackHoneyJars(items: CartItem[]): number {
 }
 
 /** One bonus per pack, locked until at least one non-pack paid honey jar is in
- *  the cart. A single jar unlocks every pack's bonus. */
+ *  the cart. The unlock is deliberately not proportional to the trigger jars:
+ *  a single jar unlocks every pack's bonus, so this is not a missing
+ *  Math.min(packCount, paidNonPackHoneyJars) — the count of jars past the first
+ *  does not matter. */
 export function earnedPackBonuses(items: CartItem[]): number {
   return paidNonPackHoneyJars(items) >= 1 ? packCount(items) : 0;
 }
 
 /** Pack bonuses already in the cart. Counted per line, not per unit: the propolis
- *  bonus is one claim with quantity 2. Bonus lines never merge (unique bonusKey). */
+ *  bonus is one claim with quantity 2, and counting units would spend two
+ *  entitlements on it. Per-line counting is only correct while bonus lines are
+ *  never merged: addBonusItem in lib/cart.ts guarantees it by always appending a
+ *  new entry, bypassing addItem's merge on (productId, price) — which would
+ *  otherwise fold two bonus lines together, since every bonus line has price 0. */
 export function claimedPackBonuses(items: CartItem[]): number {
   return items.filter((i) => i.isBonus && bonusSourceOf(i) === "pack").length;
 }
