@@ -140,29 +140,53 @@ export interface CheckoutLine {
   unitPrice: number;
   quantity: number;
   isBonus?: boolean;
+  bonusSource?: BonusSource;
 }
 
 /**
- * Server-side guard: recompute the free-jar entitlement from the *paid* lines
- * and drop any bonus jars beyond it, so a tampered payload can't smuggle in a
- * free item. Kept bonus lines are forced to price 0. `honeyCategoryOf` maps a
- * productId to its catalog category (so weight and honey-ness can't be faked).
+ * Server-side guard: recompute both bonus entitlements from the *paid* lines and
+ * drop any bonus beyond them, so a tampered payload can't smuggle in free items.
+ * Each pool is capped independently. Pack bonuses are additionally checked
+ * against the eligibility rules (no salcam) and their quantity is forced to the
+ * catalog value (2 for propolis), so neither can be faked. Kept bonus lines are
+ * forced to price 0. `catalogOf` maps a productId to its catalog product, so
+ * category, pack-ness and bonus quantity all come from the server's data.
  */
 export function enforceBonusEntitlement<T extends CheckoutLine>(
   lines: T[],
-  honeyCategoryOf: (productId: string) => Product["category"] | undefined
+  catalogOf: (productId: string) => Product | undefined
 ): T[] {
-  const paidKg = lines.reduce((kg, l) => {
-    if (l.isBonus || honeyCategoryOf(l.productId) !== "miere") return kg;
-    return kg + honeyKgFromLabel(l.variant ?? "") * l.quantity;
-  }, 0);
-  const allowed = Math.floor(paidKg / FREE_JAR_STEP_KG);
+  const variantOf = (line: CheckoutLine): ProductVariant | undefined =>
+    catalogOf(line.productId)?.variants.find((v) => (v.weight ?? v.type) === line.variant);
 
-  let kept = 0;
-  return lines.flatMap((l) => {
-    if (!l.isBonus) return [l];
-    if (kept + l.quantity > allowed) return []; // over-entitlement → drop
-    kept += l.quantity;
-    return [{ ...l, unitPrice: 0 }];
+  let paidKg = 0;
+  let packs = 0;
+  let triggerJars = 0;
+  for (const line of lines) {
+    if (line.isBonus || catalogOf(line.productId)?.category !== "miere") continue;
+    paidKg += honeyKgFromLabel(line.variant ?? "") * line.quantity;
+    if (variantOf(line)?.bonusPack) packs += line.quantity;
+    else triggerJars += line.quantity;
+  }
+
+  const allowedKg = Math.floor(paidKg / FREE_JAR_STEP_KG);
+  const allowedPack = triggerJars >= 1 ? packs : 0;
+
+  let keptKg = 0;
+  let keptPack = 0;
+  return lines.flatMap((line) => {
+    if (!line.isBonus) return [line];
+
+    if (bonusSourceOf(line) === "kg") {
+      if (keptKg + line.quantity > allowedKg) return []; // over-entitlement → drop
+      keptKg += line.quantity;
+      return [{ ...line, unitPrice: 0 }];
+    }
+
+    const product = catalogOf(line.productId);
+    if (!product || !isPackBonusEligible(product)) return []; // salcam or unknown
+    if (keptPack + 1 > allowedPack) return [];
+    keptPack += 1;
+    return [{ ...line, unitPrice: 0, quantity: packBonusQuantity(product) }];
   });
 }

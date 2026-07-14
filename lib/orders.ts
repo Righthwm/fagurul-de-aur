@@ -34,6 +34,7 @@ export const checkoutInputSchema = z.object({
           unitPrice: z.number().int().nonnegative(),
           quantity: z.number().int().positive(),
           isBonus: z.boolean().optional(),
+          bonusSource: z.enum(["kg", "pack"]).optional(),
         })
         // Only free bonus jars may be priced at 0; paid lines must cost > 0.
         .refine((i) => i.isBonus === true || i.unitPrice > 0, {
@@ -69,8 +70,8 @@ export async function persistOrder(input: CheckoutInput, paymentStatus: string):
 
   // Re-derive the free-jar entitlement from paid honey, dropping any bonus jars
   // beyond it so a tampered payload can't smuggle in free items.
-  const categoryOf = (id: string) => products.find((p) => p.id === id)?.category;
-  const orderedItems = enforceBonusEntitlement(input.items, categoryOf);
+  const catalogOf = (id: string) => products.find((p) => p.id === id);
+  const orderedItems = enforceBonusEntitlement(input.items, catalogOf);
 
   const lines = orderedItems.map((i) => ({
     productId: i.productId,

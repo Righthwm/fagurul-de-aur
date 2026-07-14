@@ -14,6 +14,8 @@ import {
   overclaimedPackBonuses,
   isPackBonusEligible,
   packBonusQuantity,
+  enforceBonusEntitlement,
+  type CheckoutLine,
 } from "./promo";
 import { products } from "./products";
 import type { BonusSource, CartItem, ProductVariant } from "@/types";
@@ -231,5 +233,73 @@ describe("packBonusQuantity", () => {
   });
   it("grants 1 honey jar", () => {
     expect(packBonusQuantity(honey("miere-tei"))).toBe(1);
+  });
+});
+
+describe("enforceBonusEntitlement — pack pool", () => {
+  const catalogOf = (id: string) => products.find((p) => p.id === id);
+  const paidPack: CheckoutLine = {
+    productId: "miere-rapita",
+    variant: "Pachet 10 borcane (10kg)",
+    unitPrice: 300,
+    quantity: 1,
+  };
+  const paidJar: CheckoutLine = {
+    productId: "miere-tei",
+    variant: "1kg",
+    unitPrice: 30,
+    quantity: 1,
+  };
+  const packBonus = (productId: string, variant: string, quantity = 1): CheckoutLine => ({
+    productId,
+    variant,
+    unitPrice: 0,
+    quantity,
+    isBonus: true,
+    bonusSource: "pack" as const,
+  });
+
+  it("drops a salcam pack bonus", () => {
+    const kept = enforceBonusEntitlement(
+      [paidPack, paidJar, packBonus("miere-salcam", "1kg")],
+      catalogOf
+    );
+    expect(kept.some((l) => l.productId === "miere-salcam")).toBe(false);
+  });
+
+  it("forces a tampered propolis bonus quantity back to 2", () => {
+    const kept = enforceBonusEntitlement(
+      [paidPack, paidJar, packBonus("tinctura-propolis", "20ml", 10)],
+      catalogOf
+    );
+    expect(kept.find((l) => l.productId === "tinctura-propolis")?.quantity).toBe(2);
+  });
+
+  it("drops a pack bonus when no pack is in the cart", () => {
+    const kept = enforceBonusEntitlement([paidJar, packBonus("miere-tei", "1kg")], catalogOf);
+    expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+  });
+
+  it("drops a pack bonus when no trigger jar is in the cart", () => {
+    const kept = enforceBonusEntitlement([paidPack, packBonus("miere-tei", "1kg")], catalogOf);
+    expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+  });
+
+  it("keeps one bonus from each pool and prices both at 0", () => {
+    const kgBonus = {
+      productId: "miere-salcam",
+      variant: "1kg",
+      unitPrice: 0,
+      quantity: 1,
+      isBonus: true,
+      bonusSource: "kg" as const,
+    };
+    const kept = enforceBonusEntitlement(
+      [paidPack, paidJar, kgBonus, packBonus("miere-tei", "1kg")],
+      catalogOf
+    );
+    const bonuses = kept.filter((l) => l.isBonus);
+    expect(bonuses).toHaveLength(2);
+    expect(bonuses.every((l) => l.unitPrice === 0)).toBe(true);
   });
 });
