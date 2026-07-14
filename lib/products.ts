@@ -153,10 +153,12 @@ export const products: Product[] = [
     priceUnit: "1kg",
     variants: [
       { weight: "1kg", price: 30, weightKg: 1.4 },
-      // Keep the pack AFTER the 1kg jar. Several call sites fall back to
-      // variants[0] when they cannot match a variant by price — bonus lines are
-      // priced 0 and never match — and a pack in that slot would bill a free jar
-      // as ten jars of shipping.
+      // Keep the pack AFTER the 1kg jar; variants[0] is the default everywhere.
+      // The add/buy buttons on the shop and homepage cards add variants[0]
+      // outright, so a pack in that slot would turn every one-click add into a
+      // 300 lei order. Shipping and promo also fall back to variants[0] when no
+      // variant matches by price (bonus lines are priced 0 and never match),
+      // which would bill a free jar as ten. Enforced by lib/products.test.ts.
       { type: "Pachet 10 borcane (10kg)", price: 300, weightKg: 14, bonusPack: true },
     ],
     color: "#E8D44A",
