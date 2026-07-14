@@ -303,3 +303,53 @@ describe("enforceBonusEntitlement — pack pool", () => {
     expect(bonuses.every((l) => l.unitPrice === 0)).toBe(true);
   });
 });
+
+describe("enforceBonusEntitlement — kg pool", () => {
+  const catalogOf = (id: string) => products.find((p) => p.id === id);
+  // 10kg of paid honey earns exactly one kg-pool free 1kg jar.
+  const paidTenKg: CheckoutLine = {
+    productId: "miere-tei",
+    variant: "1kg",
+    unitPrice: 30,
+    quantity: 10,
+  };
+  const kgBonus = (productId: string, variant: string, quantity = 1): CheckoutLine => ({
+    productId,
+    variant,
+    unitPrice: 0,
+    quantity,
+    isBonus: true,
+    bonusSource: "kg" as const,
+  });
+
+  it("keeps a legit salcam 1kg jar as a kg bonus at price 0", () => {
+    const kept = enforceBonusEntitlement([paidTenKg, kgBonus("miere-salcam", "1kg")], catalogOf);
+    const bonus = kept.find((l) => l.isBonus);
+    expect(bonus).toBeDefined();
+    expect(bonus?.unitPrice).toBe(0);
+  });
+
+  it("drops a pack variant claimed as a kg bonus", () => {
+    const kept = enforceBonusEntitlement(
+      [paidTenKg, kgBonus("miere-rapita", "Pachet 10 borcane (10kg)")],
+      catalogOf
+    );
+    expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+  });
+
+  it("drops an unknown product claimed as a kg bonus", () => {
+    const kept = enforceBonusEntitlement(
+      [paidTenKg, kgBonus("not-a-real-product", "1kg")],
+      catalogOf
+    );
+    expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+  });
+
+  it("drops propolis claimed as a kg bonus", () => {
+    const kept = enforceBonusEntitlement(
+      [paidTenKg, kgBonus("tinctura-propolis", "20ml")],
+      catalogOf
+    );
+    expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+  });
+});

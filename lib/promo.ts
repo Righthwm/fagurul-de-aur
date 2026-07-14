@@ -178,6 +178,12 @@ export function enforceBonusEntitlement<T extends CheckoutLine>(
     if (!line.isBonus) return [line];
 
     if (bonusSourceOf(line) === "kg") {
+      // The per-kg promo grants a free 1kg honey jar (salcam allowed). Reject
+      // anything else claimed as a kg bonus: unknown product, non-honey (e.g.
+      // propolis), or a pack variant — the last would redeem a single-jar
+      // entitlement as a whole 10kg pack.
+      const product = catalogOf(line.productId);
+      if (!product || !isHoney(product) || variantOf(line)?.bonusPack) return [];
       if (keptKg + line.quantity > allowedKg) return []; // over-entitlement → drop
       keptKg += line.quantity;
       return [{ ...line, unitPrice: 0 }];
