@@ -8,7 +8,8 @@ import { checkoutInputSchema, persistOrder } from "@/lib/orders";
 export async function POST(request: Request) {
   try {
     const input = checkoutInputSchema.parse(await request.json());
-    const { orderId, totals, notes, items } = await persistOrder(input, "n/a");
+    // Ramburs endpoint: never a card payment, so bonuses are always dropped here.
+    const { orderId, totals, notes, items } = await persistOrder(input, "n/a", false);
 
     try {
       await sendOrderEmail({

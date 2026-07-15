@@ -16,7 +16,9 @@ export async function POST(request: Request) {
     }
 
     const input = checkoutInputSchema.parse(await request.json());
-    const { orderId, totals } = await persistOrder(input, "pending");
+    // Card endpoint: the order is a card payment, so bonuses are granted (kept
+    // pending until the Netopia IPN confirms payment).
+    const { orderId, totals } = await persistOrder(input, "pending", true);
 
     const origin = new URL(request.url).origin;
     const result = await startPayment({
