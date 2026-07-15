@@ -1,23 +1,40 @@
-# Anulare comandă din panoul admin — Design
+# Anulare + Ștergere comandă din panoul admin — Design
 
 **Data:** 2026-07-15
 **Autor:** brainstorming cu proprietarul magazinului
 
 ## Scop
 
-Un buton **„Anulare"** lângă butonul **„Expediat"** în tabelul de comenzi din admin.
-La anulare: se trimite clientului un email fix de anulare și comanda trece în
-statusul „Anulată". Feature-ul oglindește aproape identic fluxul „Expediat"
+Două acțiuni noi pe fiecare rând din tabelul de comenzi din admin, lângă butonul
+existent **„Expediat"**:
+
+1. **„Anulare"** — trimite clientului un email fix de anulare și trece comanda în
+   statusul „Anulată".
+2. **„Șterge"** — șterge comanda definitiv din panou și din baza de date (fără
+   email).
+
+Feature-ul oglindește fluxul „Expediat"
 (vezi `docs/superpowers/specs/2026-07-15-flux-expediere-awb-design.md`).
 
 ## Decizii (confirmate cu proprietarul)
 
+### Anulare
 1. **Status la anulare:** comanda devine `status = "anulata"` (eticheta există deja
    în `ORDER_STATUS_LABELS`).
 2. **Mail eșuat:** *totul sau nimic* — dacă emailul nu pleacă, comanda rămâne
    neatinsă și se afișează eroare (ca la Expediat).
 3. **Disponibilitate:** butonul apare doar pe comenzi **neexpediate și neanulate**.
 4. **Confirmare:** confirmare inline („Sigur? Da / Nu") înainte de a trimite.
+
+### Ștergere
+5. **Disponibilitate:** butonul „Șterge" apare pe **orice comandă**, indiferent de
+   status (inclusiv expediate/anulate).
+6. **Efect:** șterge rândul din baza de date (`prisma.order.delete`). Comenzile nu
+   au tabele copil — `items` e un câmp JSON, iar relația cu User e `onDelete:
+   SetNull` — deci nu e nevoie de cascade.
+7. **Fără email.**
+8. **Confirmare:** confirmare inline („Ștergi definitiv? Da / Nu"), buton roșu.
+9. **Ireversibil:** ștergerea e hard-delete, nu arhivare.
 
 ## Mesajul emailului (text fix)
 
@@ -27,7 +44,7 @@ statusul „Anulată". Feature-ul oglindește aproape identic fluxul „Expediat
 Numărul comenzii apare în subiect și în corp. Fără câmpuri variabile introduse de
 admin (spre deosebire de Expediat, care cere oraș + AWB).
 
-## Arhitectură — 4 unități
+## Arhitectură — 5 unități
 
 ### 1. `lib/email.ts` → `sendCancellationEmail(data)`
 
@@ -67,44 +84,75 @@ Pași (oglindește `markOrderShipped`):
 6. `revalidatePath("/admin/comenzi")`.
 7. `{ ok: true }`.
 
-### 3. `app/admin/comenzi/ShipOrderCell.tsx` (extins)
+### 3. `app/admin/comenzi/actions.ts` → `deleteOrder(orderId)`
 
-Celula de acțiuni per rând capătă trei stări (verificate în ordine):
+Semnătură: `deleteOrder(orderId: string): Promise<{ ok: true } | { ok: false; error: string }>`.
 
-1. `status === "anulata"` → text read-only **„Anulată"** (nicio acțiune).
+Pași:
+
+1. `auth()`; dacă `session?.user?.role !== "ADMIN"` → `throw new Error("Unauthorized")`.
+2. `try { await prisma.order.delete({ where: { orderNumber: orderId } }) }`
+   `catch → { ok: false, error: "Comanda nu a putut fi ștearsă." }`
+   (Prisma aruncă `P2025` dacă rândul nu există — prins de catch).
+3. `revalidatePath("/admin/comenzi")`.
+4. `{ ok: true }`.
+
+Fără email, fără guard de status — ștergerea e permisă pe orice comandă.
+
+### 4. `app/admin/comenzi/ShipOrderCell.tsx` → redenumit `OrderActionsCell.tsx`
+
+Celula face acum 3 acțiuni, deci se redenumește pentru claritate (se actualizează
+și importul din `page.tsx`). Structura: o parte **specifică stării** (Expediat /
+Anulare / read-only) plus un buton **„Șterge" mereu prezent**.
+
+Partea specifică stării (verificată în ordine):
+
+1. `status === "anulata"` → text read-only **„Anulată"**.
 2. `status === "expediat" || awb` → AWB read-only (comportamentul actual).
-3. altfel → **două butoane** unul lângă altul:
-   - **„Expediat"** — deschide formularul inline oraș + AWB existent (neschimbat).
-   - **„Anulare"** — stil roșu (`text-error` / fundal roșu subtil). Click →
-     stare de confirmare inline **„Sigur? Da / Nu"**. „Da" pornește
-     `startTransition(() => cancelOrder(orderId))`; „Nu" revine la butoane.
-     Eroarea din rezultat se afișează sub butoane (`text-error text-[11px]`).
+3. altfel → **„Expediat"** (deschide formularul oraș + AWB existent) + **„Anulare"**
+   (roșu; click → confirm inline **„Sigur? Da / Nu"** → `cancelOrder`).
 
-Cele două fluxuri (form AWB și confirm anulare) sunt stări separate în aceeași
-componentă, exclusive între ele — deschiderea uneia o închide pe cealaltă.
+Butonul **„Șterge"** (mereu vizibil, indiferent de status):
+- stil roșu, distinct de „Anulare".
+- Click → confirm inline **„Ștergi definitiv? Da / Nu"**.
+- „Da" → `startTransition(() => deleteOrder(orderId))`; „Nu" revine.
+- Eroarea din rezultat se afișează sub butoane (`text-error text-[11px]`).
 
-### 4. `app/admin/comenzi/page.tsx`
+Cele trei fluxuri interactive (form AWB, confirm anulare, confirm ștergere) sunt
+stări separate exclusive — deschiderea uneia o închide pe celelalte.
 
-Nicio coloană nouă. Celula de acțiuni existentă primește deja `status`, `awb`,
-`courierCity` — nu se schimbă props-urile.
+### 5. `app/admin/comenzi/page.tsx`
+
+Nicio coloană nouă. Se schimbă doar importul: `ShipOrderCell` → `OrderActionsCell`.
+Props-urile rămân aceleași (`status`, `awb`, `courierCity`, `orderId`).
 
 ## Flux de date
 
+**Anulare:**
 ```
-Admin → click „Anulare" → „Sigur? Da/Nu" → „Da"
+Admin → „Anulare" → „Sigur? Da/Nu" → „Da"
       → cancelOrder(orderId)
           → sendCancellationEmail  (dacă eșuează: stop, eroare inline)
           → update status = "anulata"
           → revalidatePath
-      → tabelul se re-randează → celula arată „Anulată"
+      → celula arată „Anulată"
+```
+
+**Ștergere:**
+```
+Admin → „Șterge" → „Ștergi definitiv? Da/Nu" → „Da"
+      → deleteOrder(orderId)
+          → prisma.order.delete
+          → revalidatePath
+      → rândul dispare din tabel
 ```
 
 ## Erori
 
-- **Mail eșuat:** `{ ok: false }`, comanda neatinsă, eroare inline. Adminul poate
-  reîncerca.
-- **Comandă deja expediată/anulată:** guard server → `{ ok: false }` cu mesaj.
-- **Non-admin:** `throw` (nu ajunge la UI în mod normal).
+- **Mail anulare eșuat:** `{ ok: false }`, comanda neatinsă, eroare inline.
+- **Comandă deja expediată/anulată (la anulare):** guard server → `{ ok: false }`.
+- **Ștergere: comandă inexistentă:** Prisma aruncă → catch → `{ ok: false }`.
+- **Non-admin:** `throw` la ambele acțiuni.
 
 ## Teste
 
@@ -115,16 +163,16 @@ Admin → click „Anulare" → „Sigur? Da/Nu" → „Da"
 - Aruncă când Resend întoarce eroare.
 
 **`app/admin/comenzi/actions.test.ts`** (adaugă la suita existentă):
-- Non-admin → aruncă „Unauthorized".
-- Comandă deja expediată → `{ ok: false }`, fără email, fără update.
-- Comandă deja anulată → `{ ok: false }`, fără update.
-- Mail eșuat → `{ ok: false }`, statusul rămâne neschimbat (all-or-nothing).
-- Succes → email trimis, `status: "anulata"`, `revalidatePath` apelat.
+- `cancelOrder`: non-admin → aruncă; deja expediată → `{ ok:false }` fără email/update;
+  deja anulată → `{ ok:false }`; mail eșuat → `{ ok:false }` fără update (all-or-nothing);
+  succes → email trimis, `status: "anulata"`, `revalidatePath` apelat.
+- `deleteOrder`: non-admin → aruncă; succes → `prisma.order.delete` apelat cu
+  `orderNumber`, `revalidatePath` apelat, `{ ok:true }`; delete aruncă (rând
+  inexistent) → `{ ok:false }`.
 
 ## În afara scopului
 
-- **Refund automat:** anularea unei comenzi plătite cu cardul **nu** declanșează
-  refund prin Netopia — doar trimite mailul + setează statusul. Refund-ul rămâne
-  manual. Temă viitoare, conform deciziei „deocamdată atât".
-- **Refire evenimente analytics** (ex. un eveniment de anulare în Meta/GA4) — nu e
-  cerut.
+- **Refund automat:** anularea/ștergerea unei comenzi plătite cu cardul **nu**
+  declanșează refund prin Netopia. Refund-ul rămâne manual. Temă viitoare.
+- **Arhivare / soft-delete:** ștergerea e hard-delete definitiv, nu arhivare.
+- **Refire evenimente analytics** (ex. eveniment de anulare în Meta/GA4) — nu e cerut.
