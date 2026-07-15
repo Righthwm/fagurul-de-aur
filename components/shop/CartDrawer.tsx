@@ -223,6 +223,7 @@ export function CartDrawer() {
                           <p className="text-text-muted text-xs mt-0.5">
                             {item.selectedVariant.weight ?? item.selectedVariant.type} · borcan bonus
                           </p>
+                          <p className="text-gold-300/80 text-[11px] mt-0.5">Gratuite la plata cu cardul</p>
                           {unavailable && (
                             <p className="text-amber-300 text-xs mt-1">Indisponibil momentan</p>
                           )}
