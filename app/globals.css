@@ -56,7 +56,7 @@
 
   --gradient-honey: linear-gradient(135deg, #D4A017 0%, #F5C518 50%, #FFBE47 100%);
   --gradient-dark: linear-gradient(180deg, #0D0A06 0%, #1C1610 100%);
-  --gradient-glow: radial-gradient(ellipse at center, rgba(212, 160, 23, 0.15) 0%, transparent 70%);
+  --gradient-glow: radial-gradient(ellipse 130% 115% at center, rgba(212, 160, 23, 0.10) 0%, transparent 100%);
 
   --hero-gradient: linear-gradient(180deg, #0D0A06 0%, #1a0f00 60%, #2d1a00 100%);
   --nav-scrim: rgba(13, 10, 6, 0.92);
@@ -106,7 +106,7 @@ html.light {
   --error: #C93A3A;
 
   --gradient-dark: linear-gradient(180deg, #FAF5E9 0%, #F2EAD4 100%);
-  --gradient-glow: radial-gradient(ellipse at center, rgba(212, 160, 23, 0.2) 0%, transparent 70%);
+  --gradient-glow: radial-gradient(ellipse 130% 115% at center, rgba(212, 160, 23, 0.12) 0%, transparent 100%);
 
   --hero-gradient: linear-gradient(180deg, #FDF8EA 0%, #F7E8C2 55%, #EACB85 100%);
   --nav-scrim: rgba(250, 245, 233, 0.92);
