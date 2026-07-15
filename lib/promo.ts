@@ -9,6 +9,7 @@ import type { BonusSource, CartItem, Product, ProductVariant } from "@/types";
 export const FREE_JAR_STEP_KG = 10;
 
 const SALCAM_ID = "miere-salcam";
+const MANA_ID = "miere-mana";
 const PROPOLIS_ID = "tinctura-propolis";
 
 /** Net honey weight (kg) parsed from a variant label: "1kg" → 1,
@@ -122,9 +123,9 @@ export function overclaimedPackBonuses(items: CartItem[]): number {
   return Math.max(0, claimedPackBonuses(items) - earnedPackBonuses(items));
 }
 
-/** Products choosable as a pack bonus: every honey except salcam, plus propolis. */
+/** Products choosable as a pack bonus: every honey except salcam and mana, plus propolis. */
 export function isPackBonusEligible(product: Product): boolean {
-  if (product.id === SALCAM_ID) return false;
+  if (product.id === SALCAM_ID || product.id === MANA_ID) return false;
   return isHoney(product) || product.id === PROPOLIS_ID;
 }
 

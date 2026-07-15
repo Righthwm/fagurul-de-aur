@@ -220,6 +220,9 @@ describe("isPackBonusEligible", () => {
   it("excludes salcam", () => {
     expect(isPackBonusEligible(honey("miere-salcam"))).toBe(false);
   });
+  it("excludes mana", () => {
+    expect(isPackBonusEligible(honey("miere-mana"))).toBe(false);
+  });
   it("includes other honey", () => {
     expect(isPackBonusEligible(honey("miere-tei"))).toBe(true);
   });

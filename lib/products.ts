@@ -121,10 +121,10 @@ export const products: Product[] = [
       "Produsă din secrețiile plantelor, nu din nectar floral. Gust intens, ușor amarui. Rară și excepțional de sănătoasă.",
     longDescription:
       "Mierea de mană este un produs apicol cu totul special, diferit de toate celelalte soiuri de miere. Spre deosebire de mierea florală, care provine din nectar, mierea de mană este produsă de albine din secrețiile dulci ale plantelor — în principal conifere și foioase precum bradul, molidul și stejarul.\n\n## O miere ușor de recunoscut\n\nCuloarea sa este imediat recognoscibilă: brun-închis, aproape negru, cu reflexe verzui sau roșiatice. Gustul este intens, ușor amărui, cu note de caramel, rășini și ierburi — o experiență gustativă pentru cunoscători, foarte diferită de mierea de salcâm sau de tei.\n\n## Bogată în minerale\n\nDin punct de vedere nutritiv, mierea de mană este superioară majorității soiurilor florale: conține cantități semnificativ mai mari de minerale (magneziu, calciu, potasiu, fier), oligoelemente și antioxidanți de tip polifenoli. Este apreciată tradițional în Austria, Germania și Elveția ca tonic și pentru proprietățile sale prebiotice naturale.\n\n## Producție limitată\n\nCantitățile disponibile sunt mici — stupina noastră produce miere de mană doar în anii cu condiții climatice favorabile. Este o miere crudă, neîncălzită, recoltată manual și extrasă la rece. O miere naturală rară, pentru cei care caută autenticul.",
-    price: 30,
+    price: 45,
     priceUnit: "1kg",
     variants: [
-      { weight: "1kg", price: 30, weightKg: 1.4 },
+      { weight: "1kg", price: 45, weightKg: 1.4 },
     ],
     color: "#4A3520",
     image: "/images/products/miere-mana.webp",
