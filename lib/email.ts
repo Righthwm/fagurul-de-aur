@@ -22,6 +22,9 @@ export interface OrderItem {
 const RESEND_API_KEY = process.env.RESEND_API_KEY ?? "";
 const MAIL_FROM = process.env.MAIL_FROM ?? "Fagurul de Aur <onboarding@resend.dev>";
 const MAIL_TO = process.env.MAIL_TO ?? "faguruldeaur@gmail.com";
+// Where customer-facing emails route replies — the business inbox. Kept separate
+// from MAIL_TO (the shop's internal notification inbox, which may differ).
+const SHOP_REPLY_TO = process.env.SHOP_REPLY_TO ?? "faguruldeaur@gmail.com";
 
 let client: Resend | null = null;
 
@@ -167,6 +170,61 @@ export async function sendOrderEmail(data: OrderEmailData): Promise<void> {
     text,
     html,
   });
+}
+
+export interface ShippingEmailData {
+  orderId: string;
+  customerEmail: string;
+  customerFirstName: string;
+  courierCity: string;
+  awb: string;
+}
+
+/**
+ * Tells the CUSTOMER their parcel is on its way. Unlike the other senders (which
+ * notify the shop at MAIL_TO), this goes to the customer's address, from the shop
+ * (MAIL_FROM, a verified faguruldeaur.ro sender), with replies routed to the shop
+ * inbox. Throws on failure so the caller can abort before persisting.
+ */
+export async function sendShippingEmail(data: ShippingEmailData): Promise<void> {
+  const name = esc(data.customerFirstName);
+  const orderId = esc(data.orderId);
+  const city = esc(data.courierCity);
+  const awb = esc(data.awb);
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">
+      <h2 style="color:#B5700A">Comanda ta e pe drum 🚚</h2>
+      <p>Salut ${name},</p>
+      <p>
+        Comanda <strong>${orderId}</strong> este în curs de livrare din sediul
+        <strong>Fan Courier ${city}</strong>, cu numărul AWB <strong>${awb}</strong>.
+      </p>
+      <p>O poți urmări pe <a href="https://www.fancourier.ro/awb-tracking/" style="color:#B5700A">fancourier.ro</a> folosind codul AWB.</p>
+      <p style="color:#888">Mulțumim că ai ales Fagurul de Aur! 🐝</p>
+    </div>`;
+
+  const text = [
+    `Comanda ta e pe drum`,
+    ``,
+    `Salut ${data.customerFirstName},`,
+    `Comanda ${data.orderId} este în curs de livrare din sediul Fan Courier ${data.courierCity}, cu AWB ${data.awb}.`,
+    `Urmărește pe: https://www.fancourier.ro/awb-tracking/`,
+    ``,
+    `Mulțumim că ai ales Fagurul de Aur!`,
+  ].join("\n");
+
+  const { error } = await getClient().emails.send({
+    from: MAIL_FROM,
+    to: data.customerEmail,
+    replyTo: SHOP_REPLY_TO, // customer replies reach the business inbox
+    subject: `Comanda ${data.orderId} a fost expediată`,
+    html,
+    text,
+  });
+  if (error) {
+    throw new Error(`Resend error: ${error.name} — ${error.message}`);
+  }
 }
 
 export interface ContactEmailData {
