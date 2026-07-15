@@ -139,25 +139,52 @@ const JWT_ALG: Record<string, string> = {
 };
 
 /**
- * Normalize a public key read from an env var into a valid SPKI PEM, canonically
- * re-wrapped every time. Env pastes mangle keys in several ways: `\n`-escaped
- * single-line values, stripped `-----BEGIN/END-----` markers, or — the one that
- * bit us in production — markers present but the base64 body flattened onto one
- * line (newlines turned into spaces), which OpenSSL rejects with
- * ERR_OSSL_UNSUPPORTED. We always strip the armor + all whitespace down to the
- * pure base64 body and rebuild 64-char lines, so any of those inputs parse.
- * Returns "" for an empty input.
+ * Normalize whatever Netopia gives for IPN verification into a canonical SPKI
+ * public-key PEM. Across sandbox/live and env pastes we've seen: a bare
+ * `PUBLIC KEY`, an X.509 `CERTIFICATE` (live), PKCS#1 `RSA PUBLIC KEY`,
+ * `\n`-escaped single-line values, stripped BEGIN/END markers, and a body
+ * flattened onto one line. Wrong guesses surface as OpenSSL errors
+ * (ERR_OSSL_UNSUPPORTED, ERR_OSSL_ASN1_WRONG_TAG), so we parse defensively:
+ * extract the key from a certificate, accept any key encoding, and as a last
+ * resort try each interpretation of the raw base64. Returns "" if nothing parses.
  */
 export function normalizePublicKey(raw: string): string {
   const cleaned = (raw ?? "").replace(/\\n/g, "\n").trim();
   if (!cleaned) return "";
-  const body = cleaned
-    .replace(/-----BEGIN [A-Z ]+-----/g, "")
-    .replace(/-----END [A-Z ]+-----/g, "")
-    .replace(/\s+/g, "");
+
+  const toSpki = (key: crypto.KeyObject) => key.export({ type: "spki", format: "pem" }).toString().trim();
+  const fromCertificate = (pem: string) => new crypto.X509Certificate(pem).publicKey;
+
+  // 1) If it already parses as-is (SPKI/PKCS#1 key, or an X.509 certificate whose
+  //    public key we extract), normalize it to a canonical SPKI PEM.
+  if (cleaned.includes("BEGIN CERTIFICATE")) {
+    try {
+      return toSpki(fromCertificate(cleaned));
+    } catch {
+      /* fall through */
+    }
+  }
+  try {
+    return toSpki(crypto.createPublicKey(cleaned));
+  } catch {
+    /* fall through */
+  }
+
+  // 2) Otherwise strip any armor + all whitespace to the pure base64 body and try
+  //    each interpretation — this repairs a body flattened onto one line, or a
+  //    key/cert pasted without its BEGIN/END markers. First that parses wins.
+  const body = cleaned.replace(/-----[^-]*-----/g, "").replace(/\s+/g, "");
   if (!body) return "";
   const wrapped = body.match(/.{1,64}/g)?.join("\n") ?? body;
-  return `-----BEGIN PUBLIC KEY-----\n${wrapped}\n-----END PUBLIC KEY-----`;
+  for (const label of ["PUBLIC KEY", "RSA PUBLIC KEY", "CERTIFICATE"] as const) {
+    const pem = `-----BEGIN ${label}-----\n${wrapped}\n-----END ${label}-----`;
+    try {
+      return toSpki(label === "CERTIFICATE" ? fromCertificate(pem) : crypto.createPublicKey(pem));
+    } catch {
+      /* try the next interpretation */
+    }
+  }
+  return "";
 }
 
 export interface VerifyOutcome {
