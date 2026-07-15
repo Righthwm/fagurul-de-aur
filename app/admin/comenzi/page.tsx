@@ -63,7 +63,7 @@ export default async function AdminOrdersPage() {
                       <Badge color="gold">{ORDER_STATUS_LABELS[o.status] ?? o.status}</Badge>
                     </td>
                     <td className="px-3 py-2 text-text-muted whitespace-nowrap">
-                      {new Date(o.createdAt).toLocaleDateString("ro-RO", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                      {new Date(o.createdAt).toLocaleString("ro-RO", { day: "2-digit", month: "2-digit", year: "2-digit", hour: "2-digit", minute: "2-digit", timeZone: "Europe/Bucharest" })}
                     </td>
                     <td className="px-3 py-2">
                       <ShipOrderCell
