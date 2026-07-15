@@ -42,8 +42,13 @@ export function OrderActionsCell({
     setError("");
     startTransition(async () => {
       const res = await action();
-      if (!res.ok) setError(res.error);
-      // On success revalidatePath re-renders the row into its new state.
+      if (!res.ok) {
+        setError(res.error);
+        return;
+      }
+      // Return to idle so the render falls through to the up-to-date status
+      // branch after revalidatePath re-renders the row.
+      goto("idle");
     });
   };
 
