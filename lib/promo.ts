@@ -140,7 +140,8 @@ export function packBonusQuantity(product: Product): number {
  * rest are "indisponibil momentan" (kept in the cart UI, dropped at checkout).
  * Shared by the cart drawer and the checkout page so they always agree.
  */
-export function orderableBonusKeys(items: CartItem[]): Set<number> {
+export function orderableBonusKeys(items: CartItem[], cardPayment = true): Set<number> {
+  if (!cardPayment) return new Set(); // ramburs: no bonus jar is orderable
   const kgLines = items.filter((i) => i.isBonus && bonusSourceOf(i) === "kg").length;
   const packLines = items.filter((i) => i.isBonus && bonusSourceOf(i) === "pack").length;
   const availableKg = kgLines - overclaimedFreeJars(items);
@@ -174,11 +175,15 @@ export interface CheckoutLine {
  * catalog value (2 for propolis), so neither can be faked. Kept bonus lines are
  * forced to price 0. `catalogOf` maps a productId to its catalog product, so
  * category, pack-ness and bonus quantity all come from the server's data.
+ * Bonuses are granted only when `cardPayment` is true; a ramburs order drops
+ * all bonus lines.
  */
 export function enforceBonusEntitlement<T extends CheckoutLine>(
   lines: T[],
-  catalogOf: (productId: string) => Product | undefined
+  catalogOf: (productId: string) => Product | undefined,
+  cardPayment = true
 ): T[] {
+  if (!cardPayment) return lines.filter((l) => !l.isBonus); // ramburs: drop all bonuses
   const variantOf = (line: CheckoutLine): ProductVariant | undefined =>
     catalogOf(line.productId)?.variants.find((v) => (v.weight ?? v.type) === line.variant);
 

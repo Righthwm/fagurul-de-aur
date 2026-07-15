@@ -420,3 +420,65 @@ describe("orderableBonusKeys", () => {
     expect(orderableBonusKeys(cart).size).toBe(0);
   });
 });
+
+describe("payment gate — orderableBonusKeys", () => {
+  it("returns an empty set for ramburs, no matter what's earned", () => {
+    const cart = [
+      line("miere-rapita", pack10kg),
+      line("miere-tei", jar1kg),
+      bonusLine("miere-tei", "kg"),
+      bonusLine("tinctura-propolis", "pack", 2),
+    ];
+    expect(orderableBonusKeys(cart, false).size).toBe(0);
+  });
+
+  it("is unchanged for card (default stays card)", () => {
+    const cart = [
+      line("miere-rapita", pack10kg),
+      line("miere-tei", jar1kg),
+      bonusLine("miere-tei", "kg"),
+      bonusLine("tinctura-propolis", "pack", 2),
+    ];
+    expect(orderableBonusKeys(cart, true)).toEqual(orderableBonusKeys(cart));
+    expect(orderableBonusKeys(cart).size).toBe(2);
+  });
+});
+
+describe("payment gate — enforceBonusEntitlement", () => {
+  const catalogOf = (id: string) => products.find((p) => p.id === id);
+  const paidPack: CheckoutLine = {
+    productId: "miere-rapita",
+    variant: "Pachet 10 borcane (10kg)",
+    unitPrice: 300,
+    quantity: 1,
+  };
+  const paidJar: CheckoutLine = { productId: "miere-tei", variant: "1kg", unitPrice: 30, quantity: 1 };
+  const kgBonus: CheckoutLine = {
+    productId: "miere-tei",
+    variant: "1kg",
+    unitPrice: 0,
+    quantity: 1,
+    isBonus: true,
+    bonusSource: "kg" as const,
+  };
+  const packBonus: CheckoutLine = {
+    productId: "tinctura-propolis",
+    variant: "20ml",
+    unitPrice: 0,
+    quantity: 2,
+    isBonus: true,
+    bonusSource: "pack" as const,
+  };
+
+  it("strips every bonus line for ramburs, keeps paid lines", () => {
+    const kept = enforceBonusEntitlement([paidPack, paidJar, kgBonus, packBonus], catalogOf, false);
+    expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+    expect(kept.map((l) => l.productId)).toEqual(["miere-rapita", "miere-tei"]);
+  });
+
+  it("keeps entitled bonuses for card (default stays card)", () => {
+    const kept = enforceBonusEntitlement([paidPack, paidJar, kgBonus, packBonus], catalogOf, true);
+    expect(kept.filter((l) => l.isBonus)).toHaveLength(2);
+    expect(enforceBonusEntitlement([paidPack, paidJar, kgBonus, packBonus], catalogOf)).toEqual(kept);
+  });
+});
