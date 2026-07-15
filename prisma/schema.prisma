@@ -59,6 +59,9 @@ model Order {
   paymentStatus      String   @default("n/a")
   // Netopia transaction id (ntpID), set once a card payment is initiated.
   paymentId          String?
+  // Set when the order is dispatched via the admin "Expediat" action.
+  awb                String?
+  courierCity        String?
   notes              String?
   items              String   // JSON-encoded OrderItem[] (SQLite has no JSON type)
   subtotal           Int
