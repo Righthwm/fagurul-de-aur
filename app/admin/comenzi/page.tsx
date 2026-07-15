@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { prisma } from "@/lib/prisma";
 import { formatPrice, ORDER_STATUS_LABELS, PAYMENT_STATUS_LABELS } from "@/lib/utils";
 import { Badge } from "@/components/ui/Badge";
+import { ShipOrderCell } from "./ShipOrderCell";
 
 export const metadata: Metadata = { title: "Admin · Comenzi" };
 export const dynamic = "force-dynamic";
@@ -27,6 +28,7 @@ export default async function AdminOrdersPage() {
                 <th className="text-left font-medium px-3 py-2">Plată</th>
                 <th className="text-left font-medium px-3 py-2">Status</th>
                 <th className="text-left font-medium px-3 py-2">Data</th>
+                <th className="text-left font-medium px-3 py-2">Livrare</th>
               </tr>
             </thead>
             <tbody>
@@ -62,6 +64,14 @@ export default async function AdminOrdersPage() {
                     </td>
                     <td className="px-3 py-2 text-text-muted whitespace-nowrap">
                       {new Date(o.createdAt).toLocaleDateString("ro-RO", { day: "2-digit", month: "2-digit", year: "numeric" })}
+                    </td>
+                    <td className="px-3 py-2">
+                      <ShipOrderCell
+                        orderId={o.orderNumber}
+                        status={o.status}
+                        awb={o.awb}
+                        courierCity={o.courierCity}
+                      />
                     </td>
                   </tr>
                 );
