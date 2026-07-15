@@ -63,20 +63,25 @@ export interface PersistedOrder {
  * Recompute shipping authoritatively, then persist the order (linked to the
  * logged-in account if any). `paymentStatus` is "n/a" for ramburs and "pending"
  * for card until the IPN confirms it.
+ *
+ * `cardPayment` is supplied by the calling ROUTE, not read from the request body:
+ * the ramburs endpoint passes false and the card endpoint passes true. Bonuses are
+ * card-only, so this can't be spoofed by posting `paymentMethod: "card"` to the
+ * ramburs endpoint (which never verifies a card payment).
  */
-export async function persistOrder(input: CheckoutInput, paymentStatus: string): Promise<PersistedOrder> {
+export async function persistOrder(
+  input: CheckoutInput,
+  paymentStatus: string,
+  cardPayment: boolean
+): Promise<PersistedOrder> {
   const orderId = `SB-${Date.now().toString(36).toUpperCase()}`;
   const session = await auth();
 
   // Re-derive the free-jar entitlement from paid honey, dropping any bonus jars
   // beyond it so a tampered payload can't smuggle in free items. Bonuses are
-  // card-only, so a ramburs order drops every bonus line.
+  // card-only, so a ramburs order (cardPayment=false) drops every bonus line.
   const catalogOf = (id: string) => products.find((p) => p.id === id);
-  const orderedItems = enforceBonusEntitlement(
-    input.items,
-    catalogOf,
-    input.paymentMethod === "card"
-  );
+  const orderedItems = enforceBonusEntitlement(input.items, catalogOf, cardPayment);
 
   const lines = orderedItems.map((i) => ({
     productId: i.productId,
@@ -89,7 +94,7 @@ export async function persistOrder(input: CheckoutInput, paymentStatus: string):
     county: input.shippingAddress.county,
     locality: input.shippingAddress.city,
     localityType: localityTypeOf(input.shippingAddress.county, input.shippingAddress.city),
-    cashOnDelivery: input.paymentMethod === "ramburs" ? subtotal : 0,
+    cashOnDelivery: cardPayment ? 0 : subtotal,
   });
   const shipping = shippingResult.cost;
   // Coupon validated + applied server-side so the total can't be tampered with.

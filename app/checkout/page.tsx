@@ -123,6 +123,9 @@ export default function CheckoutPage() {
   // jars are only orderable when paying by card.
   const orderableKeys = orderableBonusKeys(items, paymentMethod === "card");
   const orderableItems = items.filter((i) => !i.isBonus || orderableKeys.has(i.bonusKey!));
+  // How many bonus jars the customer would actually receive on card — excludes any
+  // over-entitled line that card wouldn't deliver, so the nudge can't overpromise.
+  const cardBonusCount = orderableBonusKeys(items, true).size;
   const county = watch("county");
   const locality = watch("city");
 
@@ -491,14 +494,14 @@ export default function CheckoutPage() {
                 </label>
               </div>
 
-              {paymentMethod !== "card" && items.some((i) => i.isBonus) && (
+              {paymentMethod !== "card" && cardBonusCount > 0 && (
                 <div className="mb-5 flex items-start gap-2 rounded-sm border border-gold-400/40 bg-gold-400/10 p-4 text-sm text-text-primary">
                   <CreditCard size={18} className="text-gold-300 shrink-0 mt-0.5" />
                   <span>
                     <strong className="text-gold-300">Plătește cu cardul</strong> și primești{" "}
-                    {items.filter((i) => i.isBonus).length === 1
+                    {cardBonusCount === 1
                       ? "borcanul gratuit"
-                      : `cele ${items.filter((i) => i.isBonus).length} borcane gratuite`}
+                      : `cele ${cardBonusCount} borcane gratuite`}
                     . La plata ramburs, borcanele bonus nu sunt incluse.
                   </span>
                 </div>
