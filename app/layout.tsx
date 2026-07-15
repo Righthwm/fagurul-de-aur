@@ -9,6 +9,7 @@ import { CartDrawer } from "@/components/shop/CartDrawer";
 import { FreeJarPopup } from "@/components/shop/FreeJarPopup";
 import { CookieConsent } from "@/components/layout/CookieConsent";
 import { MetaPixel } from "@/components/analytics/MetaPixel";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 import {
   siteConfig,
   siteKeywords,
@@ -99,6 +100,7 @@ export default function RootLayout({
           <FreeJarPopup />
           <CookieConsent />
           <MetaPixel />
+          <GoogleAnalytics />
         </SessionProvider>
       </body>
     </html>
