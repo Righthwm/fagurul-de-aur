@@ -35,7 +35,7 @@ export function HeroSection() {
           playsInline
           preload="auto"
           poster="/images/hero-albine-poster.jpg"
-          className="absolute inset-0 w-full h-full object-cover blur-[2px] scale-[1.02] brightness-[.68] contrast-[.8] saturate-[.82] motion-reduce:hidden"
+          className="absolute inset-0 w-full h-full object-cover blur-[2px] scale-[1.02] motion-reduce:hidden"
           aria-hidden="true"
         >
           <source src="/videos/hero-albine.mp4" type="video/mp4" />
@@ -43,7 +43,7 @@ export function HeroSection() {
         {/* Theme-tinted veil so the video sits behind the content, not in front of it */}
         <div
           className="absolute inset-0 pointer-events-none"
-          style={{ background: "var(--hero-gradient)", opacity: 0.8 }}
+          style={{ background: "var(--hero-gradient)", opacity: 0.9 }}
           aria-hidden="true"
         />
         {/* Light theme only: soft dim so the bright video doesn't wash out the hero */}
