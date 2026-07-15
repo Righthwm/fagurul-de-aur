@@ -20,12 +20,21 @@ export function getCookieConsent(): CookieConsent | null {
   }
 }
 
-/** Persist the visitor's choice. */
+/** Event fired on the window whenever the consent choice changes, so in-page
+ *  analytics/marketing code can react without a reload. */
+export const CONSENT_CHANGE_EVENT = "fda-consent-change";
+
+/** Persist the visitor's choice and notify in-page listeners. */
 export function setCookieConsent(value: CookieConsent): void {
   try {
     window.localStorage.setItem(KEY, value);
   } catch {
     /* localStorage unavailable — the banner just won't remember the choice */
+  }
+  try {
+    window.dispatchEvent(new Event(CONSENT_CHANGE_EVENT));
+  } catch {
+    /* no window (SSR) — nothing to notify */
   }
 }
 

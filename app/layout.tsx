@@ -8,6 +8,7 @@ import { Footer } from "@/components/layout/Footer";
 import { CartDrawer } from "@/components/shop/CartDrawer";
 import { FreeJarPopup } from "@/components/shop/FreeJarPopup";
 import { CookieConsent } from "@/components/layout/CookieConsent";
+import { MetaPixel } from "@/components/analytics/MetaPixel";
 import {
   siteConfig,
   siteKeywords,
@@ -97,6 +98,7 @@ export default function RootLayout({
           <CartDrawer />
           <FreeJarPopup />
           <CookieConsent />
+          <MetaPixel />
         </SessionProvider>
       </body>
     </html>
