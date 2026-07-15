@@ -93,7 +93,7 @@ export function HeroSection() {
           initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 1.1, delay: 0.55, ease: "easeOut" }}
-          className="absolute right-0 sm:right-2 lg:right-6 bottom-0 w-[210px] sm:w-[290px] lg:w-[370px] pointer-events-none select-none"
+          className="hidden md:block absolute right-0 sm:right-2 lg:right-6 bottom-0 w-[210px] sm:w-[290px] lg:w-[370px] pointer-events-none select-none"
           aria-hidden="true"
         >
           <Image
