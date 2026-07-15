@@ -69,9 +69,14 @@ export async function persistOrder(input: CheckoutInput, paymentStatus: string):
   const session = await auth();
 
   // Re-derive the free-jar entitlement from paid honey, dropping any bonus jars
-  // beyond it so a tampered payload can't smuggle in free items.
+  // beyond it so a tampered payload can't smuggle in free items. Bonuses are
+  // card-only, so a ramburs order drops every bonus line.
   const catalogOf = (id: string) => products.find((p) => p.id === id);
-  const orderedItems = enforceBonusEntitlement(input.items, catalogOf);
+  const orderedItems = enforceBonusEntitlement(
+    input.items,
+    catalogOf,
+    input.paymentMethod === "card"
+  );
 
   const lines = orderedItems.map((i) => ({
     productId: i.productId,
