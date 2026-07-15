@@ -45,6 +45,14 @@ describe("normalizePublicKey", () => {
     const escaped = PUB_PEM.replace(/\n/g, "\\n");
     expect(normalizePublicKey(escaped)).toBe(PUB_PEM.trim());
   });
+
+  it("repairs a key whose base64 body was flattened with spaces (the prod bug)", () => {
+    // Markers present, but newlines became spaces → OpenSSL ERR_OSSL_UNSUPPORTED.
+    const flattened = PUB_PEM.replace(/\n/g, " ").trim();
+    const rebuilt = normalizePublicKey(flattened);
+    const token = makeJwt("RS512", { orderID: "SB-1" });
+    expect(verifySignature(token, "", rebuilt).verified).toBe(true);
+  });
 });
 
 describe("verifySignature", () => {

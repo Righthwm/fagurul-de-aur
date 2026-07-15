@@ -139,17 +139,25 @@ const JWT_ALG: Record<string, string> = {
 };
 
 /**
- * Normalize a public key read from an env var into a valid SPKI PEM. Handles the
- * two common paste mistakes: `\n`-escaped single-line values, and a bare base64
- * body with the `-----BEGIN/END PUBLIC KEY-----` markers stripped off. Returns
- * "" for an empty input.
+ * Normalize a public key read from an env var into a valid SPKI PEM, canonically
+ * re-wrapped every time. Env pastes mangle keys in several ways: `\n`-escaped
+ * single-line values, stripped `-----BEGIN/END-----` markers, or — the one that
+ * bit us in production — markers present but the base64 body flattened onto one
+ * line (newlines turned into spaces), which OpenSSL rejects with
+ * ERR_OSSL_UNSUPPORTED. We always strip the armor + all whitespace down to the
+ * pure base64 body and rebuild 64-char lines, so any of those inputs parse.
+ * Returns "" for an empty input.
  */
 export function normalizePublicKey(raw: string): string {
-  const key = raw.replace(/\\n/g, "\n").trim();
-  if (!key) return "";
-  if (key.includes("-----BEGIN")) return key;
-  const body = key.replace(/\s+/g, "").match(/.{1,64}/g)?.join("\n") ?? key;
-  return `-----BEGIN PUBLIC KEY-----\n${body}\n-----END PUBLIC KEY-----`;
+  const cleaned = (raw ?? "").replace(/\\n/g, "\n").trim();
+  if (!cleaned) return "";
+  const body = cleaned
+    .replace(/-----BEGIN [A-Z ]+-----/g, "")
+    .replace(/-----END [A-Z ]+-----/g, "")
+    .replace(/\s+/g, "");
+  if (!body) return "";
+  const wrapped = body.match(/.{1,64}/g)?.join("\n") ?? body;
+  return `-----BEGIN PUBLIC KEY-----\n${wrapped}\n-----END PUBLIC KEY-----`;
 }
 
 export interface VerifyOutcome {
