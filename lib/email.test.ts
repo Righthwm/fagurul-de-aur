@@ -9,7 +9,7 @@ vi.mock("resend", () => ({
   }),
 }));
 
-import { sendShippingEmail } from "@/lib/email";
+import { sendShippingEmail, sendCancellationEmail } from "@/lib/email";
 
 describe("sendShippingEmail", () => {
   beforeEach(() => {
@@ -58,6 +58,45 @@ describe("sendShippingEmail", () => {
         courierCity: "B",
         awb: "1",
       })
+    ).rejects.toThrow(/nope/);
+  });
+});
+
+describe("sendCancellationEmail", () => {
+  beforeEach(() => {
+    sendMock.mockReset();
+    sendMock.mockResolvedValue({ error: null });
+  });
+
+  it("sends to the customer, replying to the shop inbox, with the cancellation message", async () => {
+    await sendCancellationEmail({
+      orderId: "SB-9",
+      customerEmail: "client@example.com",
+      customerFirstName: "Ana",
+    });
+    expect(sendMock).toHaveBeenCalledOnce();
+    const arg = sendMock.mock.calls[0][0];
+    expect(arg.to).toBe("client@example.com");
+    expect(arg.replyTo).toBe("faguruldeaur@gmail.com");
+    expect(arg.subject).toContain("SB-9");
+    expect(arg.text).toContain("a fost anulată");
+    expect(arg.html).toContain("a fost anulată");
+  });
+
+  it("escapes HTML in the customer name", async () => {
+    await sendCancellationEmail({
+      orderId: "SB-10",
+      customerEmail: "x@y.z",
+      customerFirstName: "<b>x</b>",
+    });
+    const arg = sendMock.mock.calls[0][0];
+    expect(arg.html).toContain("&lt;b&gt;x&lt;/b&gt;");
+  });
+
+  it("throws when Resend returns an error", async () => {
+    sendMock.mockResolvedValue({ error: { name: "bad", message: "nope" } });
+    await expect(
+      sendCancellationEmail({ orderId: "SB-11", customerEmail: "x@y.z", customerFirstName: "A" })
     ).rejects.toThrow(/nope/);
   });
 });

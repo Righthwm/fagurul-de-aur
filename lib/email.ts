@@ -227,6 +227,56 @@ export async function sendShippingEmail(data: ShippingEmailData): Promise<void> 
   }
 }
 
+export interface CancellationEmailData {
+  orderId: string;
+  customerEmail: string;
+  customerFirstName: string;
+}
+
+/**
+ * Tells the CUSTOMER their order was cancelled. Like sendShippingEmail, it goes
+ * to the customer from the shop sender (MAIL_FROM) with replies routed to the
+ * shop inbox. Throws on failure so the caller can abort before persisting.
+ */
+export async function sendCancellationEmail(data: CancellationEmailData): Promise<void> {
+  const name = esc(data.customerFirstName);
+  const orderId = esc(data.orderId);
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">
+      <h2 style="color:#B5700A">Comanda ta a fost anulată</h2>
+      <p>Salut ${name},</p>
+      <p>
+        Ne pare rău, dar comanda <strong>${orderId}</strong> nu a putut fi procesată
+        și a fost anulată. Te rugăm să refaci comanda.
+      </p>
+      <p><a href="https://faguruldeaur.ro/miere" style="color:#B5700A">Reia comanda →</a></p>
+      <p style="color:#888">Îți mulțumim pentru înțelegere! 🐝</p>
+    </div>`;
+
+  const text = [
+    `Comanda ta a fost anulată`,
+    ``,
+    `Salut ${data.customerFirstName},`,
+    `Ne pare rău, dar comanda ${data.orderId} nu a putut fi procesată și a fost anulată. Te rugăm să refaci comanda.`,
+    `Reia comanda: https://faguruldeaur.ro/miere`,
+    ``,
+    `Îți mulțumim pentru înțelegere!`,
+  ].join("\n");
+
+  const { error } = await getClient().emails.send({
+    from: MAIL_FROM,
+    to: data.customerEmail,
+    replyTo: SHOP_REPLY_TO, // customer replies reach the business inbox
+    subject: `Comanda ${data.orderId} a fost anulată`,
+    html,
+    text,
+  });
+  if (error) {
+    throw new Error(`Resend error: ${error.name} — ${error.message}`);
+  }
+}
+
 export interface ContactEmailData {
   name: string;
   email: string;
