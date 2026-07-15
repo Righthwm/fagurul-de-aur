@@ -56,6 +56,12 @@ export function HeroSection() {
           aria-hidden="true"
         />
 
+        {/* Bottom fade: hides the video's bright lower edge and blends into the trust bar */}
+        <div
+          className="hero-bottom-fade absolute inset-x-0 bottom-0 h-2/5 pointer-events-none"
+          aria-hidden="true"
+        />
+
         {/* Floating hex particles */}
         <ParticleField count={32} />
 

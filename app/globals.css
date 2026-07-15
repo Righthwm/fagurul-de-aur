@@ -133,6 +133,14 @@ html.light .card:hover {
 html.light .hero-light-dim {
   opacity: 1;
 }
+/* Bottom fade: darkens the base of the hero so the video's bright lower edge
+   doesn't read as a band and the section blends into the trust bar below. */
+.hero-bottom-fade {
+  background: linear-gradient(to top, #0D0A06 0%, rgba(13, 10, 6, 0.55) 25%, transparent 55%);
+}
+html.light .hero-bottom-fade {
+  background: linear-gradient(to top, #EACB85 0%, rgba(234, 203, 133, 0.55) 25%, transparent 55%);
+}
 html.light .photo-blend {
   opacity: 0.94;
   filter: sepia(0.22) saturate(0.9) brightness(1.07) contrast(0.94)
