@@ -164,6 +164,7 @@ export const products: Product[] = [
     color: "#E8D44A",
     image: "/images/products/miere-rapita.webp",
     badge: undefined,
+    offerBadge: "Ofertă",
     inStock: true,
     tags: ["rapita", "cremoasa", "cristalizata", "primavara"],
     benefits: ["Textură cremoasă", "Energizant natural", "Gust delicat"],
