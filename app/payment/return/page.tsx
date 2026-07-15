@@ -7,11 +7,14 @@ export const dynamic = "force-dynamic";
 export default async function PaymentReturnPage({
   searchParams,
 }: {
-  searchParams: Promise<{ orderId?: string; orderID?: string }>;
+  searchParams: Promise<{ orderId?: string | string[]; orderID?: string | string[] }>;
 }) {
-  // Read our own `orderId`, but accept Netopia's `orderID` casing as a fallback.
+  // Read our own `orderId`, accepting Netopia's `orderID` casing as a fallback.
+  // Netopia echoes the id back on the redirect, so the param can arrive twice —
+  // Next.js then hands it over as an array. Collapse it to a single clean value.
   const params = await searchParams;
-  const orderId = params.orderId ?? params.orderID ?? null;
+  const raw = params.orderId ?? params.orderID ?? null;
+  const orderId = (Array.isArray(raw) ? raw[0] : raw) ?? null;
 
   return (
     <div className="bg-bg-primary pt-20 min-h-screen">
