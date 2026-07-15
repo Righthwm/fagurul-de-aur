@@ -35,7 +35,7 @@ export function HeroSection() {
           playsInline
           preload="auto"
           poster="/images/hero-albine-poster.jpg"
-          className="absolute inset-0 w-full h-full object-cover blur-[2px] scale-[1.02] motion-reduce:hidden"
+          className="absolute inset-0 w-full h-full object-cover blur-[2px] scale-[1.02] brightness-[.68] contrast-[.8] saturate-[.82] motion-reduce:hidden"
           aria-hidden="true"
         >
           <source src="/videos/hero-albine.mp4" type="video/mp4" />
