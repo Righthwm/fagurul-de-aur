@@ -84,11 +84,6 @@ function Field({
 
 export default function CheckoutPage() {
   const { items, totalPrice, clearCart } = useCartStore();
-  // Exclude bonus lines the cart no longer qualifies for ("indisponibil momentan")
-  // from the order; the server re-validates the rest. Shared with the cart drawer
-  // so both agree on which bonus lines are available.
-  const orderableKeys = orderableBonusKeys(items);
-  const orderableItems = items.filter((i) => !i.isBonus || orderableKeys.has(i.bonusKey!));
   const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [orderId, setOrderId] = useState<string | null>(null);
@@ -122,6 +117,12 @@ export default function CheckoutPage() {
   });
 
   const paymentMethod = watch("paymentMethod");
+  // Exclude bonus lines the cart no longer qualifies for ("indisponibil momentan")
+  // from the order; the server re-validates the rest. Shared with the cart drawer
+  // so both agree on which bonus lines are available. Gated on card payment: bonus
+  // jars are only orderable when paying by card.
+  const orderableKeys = orderableBonusKeys(items, paymentMethod === "card");
+  const orderableItems = items.filter((i) => !i.isBonus || orderableKeys.has(i.bonusKey!));
   const county = watch("county");
   const locality = watch("city");
 
@@ -179,7 +180,7 @@ export default function CheckoutPage() {
           county,
           locality,
           paymentMethod,
-          items: items.map((i) => ({
+          items: orderableItems.map((i) => ({
             productId: i.product.id,
             variantPrice: i.selectedVariant.price,
             quantity: i.quantity,
@@ -490,6 +491,19 @@ export default function CheckoutPage() {
                 </label>
               </div>
 
+              {paymentMethod !== "card" && items.some((i) => i.isBonus) && (
+                <div className="mb-5 flex items-start gap-2 rounded-sm border border-gold-400/40 bg-gold-400/10 p-4 text-sm text-text-primary">
+                  <CreditCard size={18} className="text-gold-300 shrink-0 mt-0.5" />
+                  <span>
+                    <strong className="text-gold-300">Plătește cu cardul</strong> și primești{" "}
+                    {items.filter((i) => i.isBonus).length === 1
+                      ? "borcanul gratuit"
+                      : `cele ${items.filter((i) => i.isBonus).length} borcane gratuite`}
+                    . La plata ramburs, borcanele bonus nu sunt incluse.
+                  </span>
+                </div>
+              )}
+
               {paymentMethod === "card" && cardEnabled && (
                 <div className="bg-bg-surface border border-gold-400/15 rounded-sm p-4 flex items-start gap-2 text-xs text-text-muted">
                   <Lock size={14} className="text-gold-400 shrink-0 mt-0.5" />
@@ -581,7 +595,11 @@ export default function CheckoutPage() {
                           </p>
                           <p className="text-text-muted text-xs">
                             {variantLabel} × {item.quantity}
-                            {bonusUnavailable && <span className="text-amber-300"> · indisponibil momentan</span>}
+                            {bonusUnavailable && (
+                              <span className="text-amber-300">
+                                {paymentMethod === "card" ? " · indisponibil momentan" : " · doar cu plata card"}
+                              </span>
+                            )}
                           </p>
                         </div>
                         {item.isBonus ? (
