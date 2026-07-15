@@ -9,7 +9,7 @@ import Script from "next/script";
  * cookie consent, per the shop owner's decision). The inline snippet fires the
  * load-time PageView; the effect fires PageView on subsequent SPA navigations.
  */
-const PIXEL_ID = "1425534296272246";
+const PIXEL_ID = "1664397665686973";
 
 declare global {
   interface Window {
