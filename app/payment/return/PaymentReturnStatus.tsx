@@ -5,6 +5,7 @@ import Link from "next/link";
 import { CheckCircle, AlertCircle, Clock } from "lucide-react";
 import { useCartStore } from "@/lib/cart";
 import { formatPrice } from "@/lib/utils";
+import { trackPurchase } from "@/lib/analytics";
 
 type View = "checking" | "paid" | "failed" | "pending" | "missing";
 
@@ -63,6 +64,14 @@ export function PaymentReturnStatus({ orderId }: { orderId: string | null }) {
       clearCart();
     }
   }, [view, clearCart]);
+
+  // Fire the Purchase conversion once the card payment is confirmed and we know
+  // the order total. trackPurchase de-duplicates, so re-renders/refreshes are safe.
+  useEffect(() => {
+    if (view === "paid" && orderId && total != null) {
+      trackPurchase(orderId, total);
+    }
+  }, [view, orderId, total]);
 
   if (view === "paid") {
     return (
