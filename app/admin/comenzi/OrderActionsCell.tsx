@@ -29,6 +29,15 @@ export function OrderActionsCell({
   const shipped = status === "expediat" || !!awb;
   const cancelled = status === "anulata";
 
+  const goto = (next: Mode) => {
+    setError("");
+    if (next === "idle") {
+      setCity("");
+      setAwbValue("");
+    }
+    setMode(next);
+  };
+
   const run = (action: () => Promise<ActionResult>) => {
     setError("");
     startTransition(async () => {
@@ -64,7 +73,7 @@ export function OrderActionsCell({
           </button>
           <button
             type="button"
-            onClick={() => setMode("idle")}
+            onClick={() => goto("idle")}
             disabled={pending}
             className="px-2 py-1 rounded-sm text-xs text-text-muted hover:text-gold-300"
           >
@@ -91,7 +100,7 @@ export function OrderActionsCell({
           </button>
           <button
             type="button"
-            onClick={() => setMode("idle")}
+            onClick={() => goto("idle")}
             disabled={pending}
             className="px-2 py-1 rounded-sm text-xs text-text-muted hover:text-gold-300"
           >
@@ -118,7 +127,7 @@ export function OrderActionsCell({
           </button>
           <button
             type="button"
-            onClick={() => setMode("idle")}
+            onClick={() => goto("idle")}
             disabled={pending}
             className="px-2 py-1 rounded-sm text-xs text-text-muted hover:text-gold-300"
           >
@@ -144,14 +153,14 @@ export function OrderActionsCell({
         <>
           <button
             type="button"
-            onClick={() => setMode("ship")}
+            onClick={() => goto("ship")}
             className="px-3 py-1 rounded-sm text-xs font-medium bg-gold-400/10 text-gold-300 hover:bg-gold-400/20 transition-colors"
           >
             Expediat
           </button>
           <button
             type="button"
-            onClick={() => setMode("confirm-cancel")}
+            onClick={() => goto("confirm-cancel")}
             className="px-3 py-1 rounded-sm text-xs font-medium bg-error/10 text-error hover:bg-error/20 transition-colors"
           >
             Anulare
@@ -160,7 +169,7 @@ export function OrderActionsCell({
       )}
       <button
         type="button"
-        onClick={() => setMode("confirm-delete")}
+        onClick={() => goto("confirm-delete")}
         className="px-3 py-1 rounded-sm text-xs font-medium text-error/80 hover:bg-error/10 transition-colors"
       >
         Șterge
