@@ -1,15 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { usePathname } from "next/navigation";
 import Script from "next/script";
-import { hasAnalyticsConsent, CONSENT_CHANGE_EVENT } from "@/lib/cookie-consent";
 
 /**
- * Meta (Facebook) Pixel for ad measurement. GDPR-gated: it loads ONLY after the
- * visitor picks "Accept toate" in the cookie banner (hasAnalyticsConsent), and
- * reacts to that choice within the same session via CONSENT_CHANGE_EVENT. The
- * inline snippet fires the load-time PageView; the effect covers SPA navigations.
+ * Meta (Facebook) Pixel for ad measurement. Loads on every visit (not gated on
+ * cookie consent, per the shop owner's decision). The inline snippet fires the
+ * load-time PageView; the effect fires PageView on subsequent SPA navigations.
  */
 const PIXEL_ID = "1425534296272246";
 
@@ -20,17 +18,8 @@ declare global {
 }
 
 export function MetaPixel() {
-  const [consented, setConsented] = useState(false);
   const pathname = usePathname();
   const skipInitial = useRef(true);
-
-  // Track the consent decision (initial read + same-session "Accept toate").
-  useEffect(() => {
-    const sync = () => setConsented(hasAnalyticsConsent());
-    sync();
-    window.addEventListener(CONSENT_CHANGE_EVENT, sync);
-    return () => window.removeEventListener(CONSENT_CHANGE_EVENT, sync);
-  }, []);
 
   // The inline Script fires the first PageView; this handles later navigations.
   useEffect(() => {
@@ -38,10 +27,8 @@ export function MetaPixel() {
       skipInitial.current = false;
       return;
     }
-    if (hasAnalyticsConsent()) window.fbq?.("track", "PageView");
+    window.fbq?.("track", "PageView");
   }, [pathname]);
-
-  if (!consented) return null;
 
   return (
     <>
