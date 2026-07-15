@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { sendShippingEmail } from "@/lib/email";
+import { sendShippingEmail, sendCancellationEmail } from "@/lib/email";
 
 const shipInput = z.object({
   courierCity: z.string().trim().min(2),
@@ -52,6 +52,45 @@ export async function markOrderShipped(
   await prisma.order.update({
     where: { orderNumber: orderId },
     data: { awb: parsed.data.awb, courierCity: parsed.data.courierCity, status: "expediat" },
+  });
+  revalidatePath("/admin/comenzi");
+  return { ok: true };
+}
+
+/**
+ * Cancel an order: email the customer, then (only if the email succeeded) set the
+ * status to "anulata". ADMIN-only. Refuses orders already shipped or cancelled.
+ */
+export async function cancelOrder(
+  orderId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await auth();
+  if (session?.user?.role !== "ADMIN") {
+    throw new Error("Unauthorized");
+  }
+
+  const order = await prisma.order.findUnique({ where: { orderNumber: orderId } });
+  if (!order) {
+    return { ok: false, error: "Comanda nu a fost găsită." };
+  }
+  if (order.status === "expediat" || order.status === "anulata") {
+    return { ok: false, error: "Comanda nu mai poate fi anulată." };
+  }
+
+  // All-or-nothing: send the email first; if it fails, leave the order untouched.
+  try {
+    await sendCancellationEmail({
+      orderId: order.orderNumber,
+      customerEmail: order.customerEmail,
+      customerFirstName: order.customerFirstName,
+    });
+  } catch {
+    return { ok: false, error: "Emailul nu a putut fi trimis. Încearcă din nou." };
+  }
+
+  await prisma.order.update({
+    where: { orderNumber: orderId },
+    data: { status: "anulata" },
   });
   revalidatePath("/admin/comenzi");
   return { ok: true };

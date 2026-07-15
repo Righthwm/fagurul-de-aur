@@ -1,22 +1,31 @@
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-const { authMock, findUniqueMock, updateMock, sendShippingEmailMock, revalidateMock } = vi.hoisted(
-  () => ({
-    authMock: vi.fn(),
-    findUniqueMock: vi.fn(),
-    updateMock: vi.fn(),
-    sendShippingEmailMock: vi.fn(),
-    revalidateMock: vi.fn(),
-  })
-);
+const {
+  authMock,
+  findUniqueMock,
+  updateMock,
+  sendShippingEmailMock,
+  sendCancellationEmailMock,
+  revalidateMock,
+} = vi.hoisted(() => ({
+  authMock: vi.fn(),
+  findUniqueMock: vi.fn(),
+  updateMock: vi.fn(),
+  sendShippingEmailMock: vi.fn(),
+  sendCancellationEmailMock: vi.fn(),
+  revalidateMock: vi.fn(),
+}));
 vi.mock("@/auth", () => ({ auth: authMock }));
 vi.mock("@/lib/prisma", () => ({
   prisma: { order: { findUnique: findUniqueMock, update: updateMock } },
 }));
-vi.mock("@/lib/email", () => ({ sendShippingEmail: sendShippingEmailMock }));
+vi.mock("@/lib/email", () => ({
+  sendShippingEmail: sendShippingEmailMock,
+  sendCancellationEmail: sendCancellationEmailMock,
+}));
 vi.mock("next/cache", () => ({ revalidatePath: revalidateMock }));
 
-import { markOrderShipped } from "@/app/admin/comenzi/actions";
+import { markOrderShipped, cancelOrder } from "@/app/admin/comenzi/actions";
 
 const order = { orderNumber: "SB-1", customerEmail: "c@x.ro", customerFirstName: "Ana" };
 
@@ -60,6 +69,66 @@ describe("markOrderShipped", () => {
     expect(updateMock).toHaveBeenCalledWith({
       where: { orderNumber: "SB-1" },
       data: { awb: "AWB123", courierCity: "Târgu Jiu", status: "expediat" },
+    });
+    expect(revalidateMock).toHaveBeenCalledWith("/admin/comenzi");
+  });
+});
+
+describe("cancelOrder", () => {
+  const cancellable = {
+    orderNumber: "SB-1",
+    customerEmail: "c@x.ro",
+    customerFirstName: "Ana",
+    status: "noua",
+  };
+
+  beforeEach(() => {
+    authMock.mockReset();
+    findUniqueMock.mockReset();
+    updateMock.mockReset();
+    sendCancellationEmailMock.mockReset();
+    revalidateMock.mockReset();
+    authMock.mockResolvedValue({ user: { role: "ADMIN" } });
+    findUniqueMock.mockResolvedValue(cancellable);
+    sendCancellationEmailMock.mockResolvedValue(undefined);
+    updateMock.mockResolvedValue({});
+  });
+
+  it("rejects non-admins", async () => {
+    authMock.mockResolvedValue({ user: { role: "CLIENT" } });
+    await expect(cancelOrder("SB-1")).rejects.toThrow(/unauthorized/i);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an already-shipped order", async () => {
+    findUniqueMock.mockResolvedValue({ ...cancellable, status: "expediat" });
+    const res = await cancelOrder("SB-1");
+    expect(res.ok).toBe(false);
+    expect(sendCancellationEmailMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an already-cancelled order", async () => {
+    findUniqueMock.mockResolvedValue({ ...cancellable, status: "anulata" });
+    const res = await cancelOrder("SB-1");
+    expect(res.ok).toBe(false);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("does NOT update when the email fails (all-or-nothing)", async () => {
+    sendCancellationEmailMock.mockRejectedValue(new Error("smtp down"));
+    const res = await cancelOrder("SB-1");
+    expect(res.ok).toBe(false);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("emails then sets status anulata on success", async () => {
+    const res = await cancelOrder("SB-1");
+    expect(res).toEqual({ ok: true });
+    expect(sendCancellationEmailMock).toHaveBeenCalledOnce();
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { orderNumber: "SB-1" },
+      data: { status: "anulata" },
     });
     expect(revalidateMock).toHaveBeenCalledWith("/admin/comenzi");
   });
