@@ -96,7 +96,7 @@ export async function persistOrder(
     localityType: localityTypeOf(input.shippingAddress.county, input.shippingAddress.city),
     cashOnDelivery: cardPayment ? 0 : subtotal,
   });
-  const shipping = shippingResult.cost;
+  let shipping = shippingResult.cost;
   // Coupon validated + applied server-side so the total can't be tampered with.
   const coupon = getCoupon(input.couponCode); // null if missing/expired
   let appliedCode: string | null = coupon?.code ?? null;
@@ -105,6 +105,10 @@ export async function persistOrder(
   if (coupon?.maxUses != null && (await couponUsageCount(coupon.code)) >= coupon.maxUses) {
     appliedCode = null;
     discount = 0;
+  }
+  // Free-shipping coupons waive the delivery fee (only while the code is applied).
+  if (appliedCode != null && coupon?.freeShipping) {
+    shipping = 0;
   }
   const total = Math.max(0, subtotal - discount + shipping);
 

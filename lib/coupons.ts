@@ -12,6 +12,8 @@ export interface Coupon {
   percent?: number;
   /** Fixed amount off, in whole lei (use this OR `percent`). */
   amount?: number;
+  /** When true, the delivery fee is waived on top of any `percent`/`amount`. */
+  freeShipping?: boolean;
   label: string;
   /** Last valid day, inclusive — ISO date "YYYY-MM-DD". */
   expiresAt?: string;
@@ -23,9 +25,15 @@ const COUPONS: Record<string, Coupon> = {
   FAGURE5: { code: "FAGURE5", percent: 5, label: "5% reducere abonare" },
   VARA50: { code: "VARA50", amount: 50, label: "50 lei reducere", expiresAt: "2026-08-31" },
   BONUS25: { code: "BONUS25", amount: 25, label: "25 lei reducere", maxUses: 10 },
-  // Test-only: shrinks the total to ~1% so Netopia go-live payments cost almost
-  // nothing. Short expiry so this -99% code can't linger in production.
-  TESTPLATA99: { code: "TESTPLATA99", percent: 99, label: "Test plată -99%", expiresAt: "2026-07-31" },
+  // Test-only: shrinks the total to ~1% AND waives delivery, so Netopia go-live
+  // payments cost almost nothing. Short expiry so this code can't linger.
+  TESTPLATA99: {
+    code: "TESTPLATA99",
+    percent: 99,
+    freeShipping: true,
+    label: "Test plată -99% + transport gratuit",
+    expiresAt: "2026-07-31",
+  },
 };
 
 export function normalizeCouponCode(code: string): string {
@@ -55,4 +63,10 @@ export function couponDiscount(subtotal: number, code: string | null | undefined
   const raw =
     coupon.amount != null ? coupon.amount : Math.round((subtotal * (coupon.percent ?? 0)) / 100);
   return Math.min(raw, subtotal);
+}
+
+/** True when the (valid, non-expired) coupon waives the delivery fee. Usage
+ *  limits are NOT checked here — the server gates that separately. */
+export function couponFreeShipping(code: string | null | undefined): boolean {
+  return getCoupon(code)?.freeShipping ?? false;
 }

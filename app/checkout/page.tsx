@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useCartStore } from "@/lib/cart";
 import { orderableBonusKeys } from "@/lib/promo";
-import { couponDiscount } from "@/lib/coupons";
+import { couponDiscount, couponFreeShipping } from "@/lib/coupons";
 import { formatPrice } from "@/lib/utils";
 import { HexPattern } from "@/components/ui/HexPattern";
 import { HoneyDropLoader } from "@/components/ui/HoneyDropLoader";
@@ -200,7 +200,9 @@ export default function CheckoutPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mounted, county, locality, paymentMethod, itemsSig]);
 
-  const shippingCost = estimate.status === "available" ? estimate.cost : 0;
+  const rawShippingCost = estimate.status === "available" ? estimate.cost : 0;
+  const freeShipping = couponFreeShipping(appliedCoupon);
+  const shippingCost = freeShipping ? 0 : rawShippingCost;
   const discount = couponDiscount(subtotal, appliedCoupon);
   const total = Math.max(0, subtotal + shippingCost - discount);
 
@@ -633,7 +635,16 @@ export default function CheckoutPage() {
                   <dt className="text-text-muted">Livrare</dt>
                   <dd>
                     {estimate.status === "available" ? (
-                      <span className="text-text-primary">{formatPrice(estimate.cost)}</span>
+                      freeShipping ? (
+                        <span className="text-success">
+                          <span className="text-text-muted line-through mr-1">
+                            {formatPrice(estimate.cost)}
+                          </span>
+                          Gratuit
+                        </span>
+                      ) : (
+                        <span className="text-text-primary">{formatPrice(estimate.cost)}</span>
+                      )
                     ) : estimate.status === "loading" ? (
                       <span className="text-text-muted">Se calculează…</span>
                     ) : estimate.status === "unavailable" ? (
