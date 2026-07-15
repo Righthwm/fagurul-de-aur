@@ -132,4 +132,21 @@ describe("bonus-pack flow (store → promo → server guard)", () => {
     expect(isPackBonusEligible(tei)).toBe(true);
     expect(isPackBonusEligible(propolis)).toBe(true); // propolis allowed as pack bonus
   });
+
+  it("a ramburs order excludes every bonus jar", () => {
+    const store = useCartStore.getState();
+    store.addItem(rapita, packVariant);
+    store.addItem(tei, jar1kg(tei));
+    store.addBonusItem(salcam, "kg");
+    store.addBonusItem(propolis, "pack");
+
+    const items = useCartStore.getState().items;
+    // Card: both bonuses survive the guard.
+    const card = enforceBonusEntitlement(toCheckoutLines(items), catalogOf, true);
+    expect(card.filter((l) => l.isBonus)).toHaveLength(2);
+    // Ramburs: no bonus survives; paid pack + paid jar remain.
+    const ramburs = enforceBonusEntitlement(toCheckoutLines(items), catalogOf, false);
+    expect(ramburs.filter((l) => l.isBonus)).toHaveLength(0);
+    expect(ramburs.map((l) => l.productId).sort()).toEqual(["miere-rapita", "miere-tei"]);
+  });
 });
