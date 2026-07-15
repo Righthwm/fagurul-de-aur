@@ -16,6 +16,7 @@ import {
   overclaimedPackBonuses,
   packBonusQuantity,
 } from "@/lib/promo";
+import { trackAddToCart } from "@/lib/analytics";
 
 // Re-exported from the framework-neutral constants module (this file is
 // "use client"; server code must read shipping constants from lib/constants).
@@ -128,6 +129,9 @@ export const useCartStore = create<CartState>()(
             items: [...state.items, { product, quantity, selectedVariant: variant }],
           };
         });
+        if (variant.price > 0) {
+          trackAddToCart({ id: product.id, name: product.name, price: variant.price, quantity });
+        }
       },
 
       // Add a free line of the chosen product (price 0). Each claim is its own

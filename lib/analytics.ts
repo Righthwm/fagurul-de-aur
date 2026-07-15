@@ -49,3 +49,71 @@ export function trackPurchase(orderId: string, value: number): void {
     currency: "RON",
   });
 }
+
+export type AnalyticsItem = {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+};
+
+/** Product page view. Meta ViewContent + GA4 view_item. */
+export function trackViewContent(item: { id: string; name: string; price: number }): void {
+  if (typeof window === "undefined") return;
+  window.fbq?.("track", "ViewContent", {
+    content_ids: [item.id],
+    content_name: item.name,
+    content_type: "product",
+    value: item.price,
+    currency: "RON",
+  });
+  window.gtag?.("event", "view_item", {
+    currency: "RON",
+    value: item.price,
+    items: [{ item_id: item.id, item_name: item.name, price: item.price }],
+  });
+}
+
+/** A paid line added to the cart. Meta AddToCart + GA4 add_to_cart. */
+export function trackAddToCart(item: AnalyticsItem): void {
+  if (typeof window === "undefined") return;
+  const value = item.price * item.quantity;
+  window.fbq?.("track", "AddToCart", {
+    content_ids: [item.id],
+    content_name: item.name,
+    content_type: "product",
+    contents: [{ id: item.id, quantity: item.quantity }],
+    value,
+    currency: "RON",
+  });
+  window.gtag?.("event", "add_to_cart", {
+    currency: "RON",
+    value,
+    items: [{ item_id: item.id, item_name: item.name, price: item.price, quantity: item.quantity }],
+  });
+}
+
+/** Entering the checkout. Meta InitiateCheckout + GA4 begin_checkout. */
+export function trackInitiateCheckout(items: AnalyticsItem[]): void {
+  if (typeof window === "undefined") return;
+  const value = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
+  const numItems = items.reduce((sum, i) => sum + i.quantity, 0);
+  window.fbq?.("track", "InitiateCheckout", {
+    content_ids: items.map((i) => i.id),
+    content_type: "product",
+    contents: items.map((i) => ({ id: i.id, quantity: i.quantity })),
+    num_items: numItems,
+    value,
+    currency: "RON",
+  });
+  window.gtag?.("event", "begin_checkout", {
+    currency: "RON",
+    value,
+    items: items.map((i) => ({
+      item_id: i.id,
+      item_name: i.name,
+      price: i.price,
+      quantity: i.quantity,
+    })),
+  });
+}

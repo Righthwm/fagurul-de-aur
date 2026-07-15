@@ -21,7 +21,7 @@ import { useCartStore } from "@/lib/cart";
 import { orderableBonusKeys } from "@/lib/promo";
 import { couponDiscount, couponFreeShipping } from "@/lib/coupons";
 import { formatPrice } from "@/lib/utils";
-import { trackPurchase } from "@/lib/analytics";
+import { trackPurchase, trackInitiateCheckout } from "@/lib/analytics";
 import { HexPattern } from "@/components/ui/HexPattern";
 import { HoneyDropLoader } from "@/components/ui/HoneyDropLoader";
 import { PaymentBadges } from "@/components/ui/PaymentBadges";
@@ -134,6 +134,24 @@ export default function CheckoutPage() {
   // localStorage on the client, so reading it during SSR / first render would
   // mismatch. Until mounted, render the same neutral values the server does.
   const subtotal = mounted ? totalPrice() : 0;
+
+  // Fire InitiateCheckout / begin_checkout once the rehydrated cart has paid
+  // items to check out.
+  const checkoutTracked = useRef(false);
+  useEffect(() => {
+    if (!mounted || checkoutTracked.current) return;
+    const paid = orderableItems.filter((i) => !i.isBonus);
+    if (paid.length === 0) return;
+    checkoutTracked.current = true;
+    trackInitiateCheckout(
+      paid.map((i) => ({
+        id: i.product.id,
+        name: i.product.name,
+        price: i.selectedVariant.price,
+        quantity: i.quantity,
+      }))
+    );
+  }, [mounted, orderableItems]);
 
   // ---- Delivery fee (flat: 30 lei oraș / 50 lei sat, by locality) ----
   type Estimate =

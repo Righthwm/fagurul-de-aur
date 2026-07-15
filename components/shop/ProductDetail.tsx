@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
@@ -9,6 +9,7 @@ import { BonusPackOffer } from "@/components/shop/BonusPackOffer";
 import { Badge } from "@/components/ui/Badge";
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import { useCartStore } from "@/lib/cart";
+import { trackViewContent } from "@/lib/analytics";
 import { formatPrice, getVariantLabel } from "@/lib/utils";
 import { getRelatedProducts, reviews as allReviews, products } from "@/lib/products";
 import { ProductCard } from "./ProductCard";
@@ -51,6 +52,11 @@ export function ProductDetail({ product }: { product: Product }) {
 
   const productReviews = allReviews[product.slug] ?? [];
   const related = getRelatedProducts(product);
+
+  // Report the product view once per product to Meta Pixel + GA4.
+  useEffect(() => {
+    trackViewContent({ id: product.id, name: product.name, price: product.variants[0].price });
+  }, [product.id, product.name, product.variants]);
 
   // Prev/next navigation across the catalog (wraps around).
   const router = useRouter();
