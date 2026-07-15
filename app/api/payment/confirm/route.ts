@@ -15,8 +15,14 @@ export async function POST(request: Request) {
       request.headers.get("Verification-token") ?? request.headers.get("verification-token");
     const ipn = verifyIpn(raw, token);
 
+    // Diagnostic (no secrets): surfaces WHY verification passed/failed in the
+    // Vercel logs — token shape, chosen alg, or the exact rejection reason.
+    console.log(
+      `Netopia IPN: order=${ipn.orderId || "?"} status=${ipn.status} verified=${ipn.verified} ` +
+        `tokenPresent=${token != null} reason="${ipn.verifyDebug}"`
+    );
+
     if (!ipn.verified) {
-      console.error("Netopia IPN: signature verification failed");
       return NextResponse.json({ errorCode: 1, message: "invalid signature" }, { status: 400 });
     }
     if (!ipn.orderId) {

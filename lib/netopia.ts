@@ -19,8 +19,11 @@ const BASE_URL = IS_LIVE ? LIVE_URL : SANDBOX_URL;
 
 const API_KEY = process.env.NETOPIA_API_KEY ?? "";
 const POS_SIGNATURE = process.env.NETOPIA_POS_SIGNATURE ?? "";
-// Netopia's public key (PEM) used to verify the IPN signature. Supports \n-escaped env values.
-const PUBLIC_KEY = (process.env.NETOPIA_PUBLIC_KEY ?? "").replace(/\\n/g, "\n");
+const RAW_PUBLIC_KEY = process.env.NETOPIA_PUBLIC_KEY ?? "";
+const HAS_PUBLIC_KEY = RAW_PUBLIC_KEY.trim().length > 0;
+// Netopia's public key (PEM), used to verify the IPN signature. Normalized so it
+// survives common env-paste mistakes (missing BEGIN/END markers, \n-escaping).
+const PUBLIC_KEY = normalizePublicKey(RAW_PUBLIC_KEY);
 
 export class NetopiaError extends Error {
   constructor(message: string) {
@@ -124,6 +127,87 @@ export interface IpnResult {
   status: PaymentOutcome;
   /** True when the IPN signature checks out against Netopia's public key. */
   verified: boolean;
+  /** Non-sensitive reason string for the verification outcome (safe to log). */
+  verifyDebug: string;
+}
+
+/** RSA JWT algorithms Netopia may use, mapped to Node's hash name. */
+const JWT_ALG: Record<string, string> = {
+  RS256: "RSA-SHA256",
+  RS384: "RSA-SHA384",
+  RS512: "RSA-SHA512",
+};
+
+/**
+ * Normalize a public key read from an env var into a valid SPKI PEM. Handles the
+ * two common paste mistakes: `\n`-escaped single-line values, and a bare base64
+ * body with the `-----BEGIN/END PUBLIC KEY-----` markers stripped off. Returns
+ * "" for an empty input.
+ */
+export function normalizePublicKey(raw: string): string {
+  const key = raw.replace(/\\n/g, "\n").trim();
+  if (!key) return "";
+  if (key.includes("-----BEGIN")) return key;
+  const body = key.replace(/\s+/g, "").match(/.{1,64}/g)?.join("\n") ?? key;
+  return `-----BEGIN PUBLIC KEY-----\n${body}\n-----END PUBLIC KEY-----`;
+}
+
+export interface VerifyOutcome {
+  verified: boolean;
+  /** Non-sensitive explanation of the outcome, for server logs. */
+  debug: string;
+}
+
+/**
+ * Verify a Netopia IPN signature against a public-key PEM. Netopia sends a
+ * `Verification-token` that is either a JWT (header.payload.signature) or a
+ * detached base64 signature over the raw body. We read the JWT's `alg` and try
+ * the matching RSA hash first, then the other RSA hashes — so an RS256 vs RS512
+ * mismatch can't reject a genuinely-signed token. Only RSA verification against
+ * OUR trusted public key is ever attempted, so accepting several hashes does not
+ * weaken security (a forger would still need the private key).
+ */
+export function verifySignature(
+  token: string | null,
+  payload: string,
+  publicKeyPem: string
+): VerifyOutcome {
+  if (!publicKeyPem) return { verified: false, debug: "no public key configured" };
+  if (!token) return { verified: false, debug: "no Verification-token present" };
+
+  const parts = token.split(".");
+  try {
+    if (parts.length === 3) {
+      let headerAlg = "RS512";
+      try {
+        headerAlg = JSON.parse(Buffer.from(parts[0], "base64url").toString()).alg ?? "RS512";
+      } catch {
+        // keep the RS512 default if the header is unreadable
+      }
+      const primary = JWT_ALG[headerAlg];
+      const algs = primary
+        ? [primary, ...Object.values(JWT_ALG).filter((a) => a !== primary)]
+        : Object.values(JWT_ALG);
+      const signed = Buffer.from(`${parts[0]}.${parts[1]}`);
+      const sig = Buffer.from(parts[2], "base64url");
+      for (const alg of algs) {
+        if (crypto.verify(alg, signed, publicKeyPem, sig)) {
+          return { verified: true, debug: `JWT verified (${alg}, header alg=${headerAlg})` };
+        }
+      }
+      return { verified: false, debug: `JWT signature mismatch (header alg=${headerAlg})` };
+    }
+    // Fallback: token is a detached base64 signature over the raw body.
+    for (const alg of ["RSA-SHA512", "RSA-SHA256"]) {
+      if (crypto.verify(alg, Buffer.from(payload), publicKeyPem, Buffer.from(token, "base64"))) {
+        return { verified: true, debug: `detached signature verified (${alg})` };
+      }
+    }
+    return { verified: false, debug: "detached signature mismatch" };
+  } catch (error) {
+    const code = (error as { code?: string }).code ?? (error as Error).message;
+    return { verified: false, debug: `verification threw: ${code}` };
+  }
 }
 
 /**
@@ -138,26 +222,6 @@ function normalizeStatus(raw: unknown): PaymentOutcome {
   return "pending"; // 15 (3DS in progress) and any other transient state
 }
 
-/**
- * Verify the IPN signature against Netopia's public key. Netopia sends a
- * `Verification-token`; we support both a JWT (header.payload.signature, RS512)
- * and a detached base64 signature over the raw body. Confirmed at go-live.
- */
-function verifyToken(token: string | null, payload: string): boolean {
-  if (!PUBLIC_KEY || !token) return false;
-  try {
-    const parts = token.split(".");
-    if (parts.length === 3) {
-      const signed = `${parts[0]}.${parts[1]}`;
-      return crypto.verify("RSA-SHA512", Buffer.from(signed), PUBLIC_KEY, Buffer.from(parts[2], "base64url"));
-    }
-    // Fallback: token is a detached base64 signature over the raw body.
-    return crypto.verify("RSA-SHA512", Buffer.from(payload), PUBLIC_KEY, Buffer.from(token, "base64"));
-  } catch {
-    return false;
-  }
-}
-
 /** Parse + verify an IPN (server-to-server confirmation) from Netopia. */
 export function verifyIpn(rawBody: string, verificationToken: string | null): IpnResult {
   const data = JSON.parse(rawBody) as {
@@ -167,10 +231,12 @@ export function verifyIpn(rawBody: string, verificationToken: string | null): Ip
   };
   const orderId = data.order?.orderID ?? data.orderID ?? "";
   const ntpID = data.payment?.ntpID ?? "";
+  const outcome = verifySignature(verificationToken, rawBody, PUBLIC_KEY);
   return {
     orderId,
     ntpID,
     status: normalizeStatus(data.payment?.status),
-    verified: verifyToken(verificationToken, rawBody),
+    verified: outcome.verified,
+    verifyDebug: HAS_PUBLIC_KEY ? outcome.debug : "NETOPIA_PUBLIC_KEY is empty",
   };
 }
