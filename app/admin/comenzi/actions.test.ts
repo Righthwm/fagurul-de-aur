@@ -4,6 +4,7 @@ const {
   authMock,
   findUniqueMock,
   updateMock,
+  deleteMock,
   sendShippingEmailMock,
   sendCancellationEmailMock,
   revalidateMock,
@@ -11,13 +12,14 @@ const {
   authMock: vi.fn(),
   findUniqueMock: vi.fn(),
   updateMock: vi.fn(),
+  deleteMock: vi.fn(),
   sendShippingEmailMock: vi.fn(),
   sendCancellationEmailMock: vi.fn(),
   revalidateMock: vi.fn(),
 }));
 vi.mock("@/auth", () => ({ auth: authMock }));
 vi.mock("@/lib/prisma", () => ({
-  prisma: { order: { findUnique: findUniqueMock, update: updateMock } },
+  prisma: { order: { findUnique: findUniqueMock, update: updateMock, delete: deleteMock } },
 }));
 vi.mock("@/lib/email", () => ({
   sendShippingEmail: sendShippingEmailMock,
@@ -25,7 +27,7 @@ vi.mock("@/lib/email", () => ({
 }));
 vi.mock("next/cache", () => ({ revalidatePath: revalidateMock }));
 
-import { markOrderShipped, cancelOrder } from "@/app/admin/comenzi/actions";
+import { markOrderShipped, cancelOrder, deleteOrder } from "@/app/admin/comenzi/actions";
 
 const order = { orderNumber: "SB-1", customerEmail: "c@x.ro", customerFirstName: "Ana" };
 
@@ -131,5 +133,34 @@ describe("cancelOrder", () => {
       data: { status: "anulata" },
     });
     expect(revalidateMock).toHaveBeenCalledWith("/admin/comenzi");
+  });
+});
+
+describe("deleteOrder", () => {
+  beforeEach(() => {
+    authMock.mockReset();
+    deleteMock.mockReset();
+    revalidateMock.mockReset();
+    authMock.mockResolvedValue({ user: { role: "ADMIN" } });
+    deleteMock.mockResolvedValue({});
+  });
+
+  it("rejects non-admins", async () => {
+    authMock.mockResolvedValue({ user: { role: "CLIENT" } });
+    await expect(deleteOrder("SB-1")).rejects.toThrow(/unauthorized/i);
+    expect(deleteMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes the order and revalidates on success", async () => {
+    const res = await deleteOrder("SB-1");
+    expect(res).toEqual({ ok: true });
+    expect(deleteMock).toHaveBeenCalledWith({ where: { orderNumber: "SB-1" } });
+    expect(revalidateMock).toHaveBeenCalledWith("/admin/comenzi");
+  });
+
+  it("returns an error when the delete throws (missing row)", async () => {
+    deleteMock.mockRejectedValue(new Error("P2025"));
+    const res = await deleteOrder("SB-1");
+    expect(res).toEqual({ ok: false, error: expect.any(String) });
   });
 });

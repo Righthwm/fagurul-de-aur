@@ -95,3 +95,25 @@ export async function cancelOrder(
   revalidatePath("/admin/comenzi");
   return { ok: true };
 }
+
+/**
+ * Permanently delete an order. ADMIN-only, no email. Orders have no child rows
+ * (items are JSON; the User relation is onDelete: SetNull), so one delete suffices.
+ * Prisma throws P2025 if the row is missing — caught and surfaced as an error.
+ */
+export async function deleteOrder(
+  orderId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await auth();
+  if (session?.user?.role !== "ADMIN") {
+    throw new Error("Unauthorized");
+  }
+
+  try {
+    await prisma.order.delete({ where: { orderNumber: orderId } });
+  } catch {
+    return { ok: false, error: "Comanda nu a putut fi ștearsă." };
+  }
+  revalidatePath("/admin/comenzi");
+  return { ok: true };
+}
