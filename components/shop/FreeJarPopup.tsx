@@ -15,8 +15,18 @@ import {
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import type { BonusSource } from "@/types";
 
-// Per-kg promotion: any honey jar. Propolis is excluded.
-const honeyProducts = products.filter(isHoney);
+// Per-kg promotion: any honey jar. Propolis is excluded. Ordered for the popup
+// so it opens on miere de tei and shows salcam last (shop owner's preference);
+// other honeys keep their catalog order in between (stable sort).
+const KG_FIRST = "miere-tei";
+const KG_LAST = "miere-salcam";
+const honeyProducts = products
+  .filter(isHoney)
+  .slice()
+  .sort((a, b) => {
+    const rank = (id: string) => (id === KG_FIRST ? -1 : id === KG_LAST ? 1 : 0);
+    return rank(a.id) - rank(b.id);
+  });
 // Pack bonus: every honey except salcam, plus the propolis tincture.
 const packBonusProducts = products.filter(isPackBonusEligible);
 
