@@ -69,6 +69,12 @@ function esc(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// Brand logo header for customer-facing emails, served from /email-logo.png
+// (a transparent raster of the site logo — email clients don't render SVG).
+// Inserted right after the opening <div> of the HTML body. No text equivalent.
+const CUSTOMER_HEADER_HTML = `
+      <img src="https://faguruldeaur.ro/email-logo.png" alt="Fagurul de Aur" width="120" style="display:block;width:120px;height:auto;margin:0 auto 20px;border:0">`;
+
 // Signature footer for every customer-facing email (shipping, cancellation,
 // confirmation, newsletter welcome). Shop-facing notifications don't carry it.
 // Inserted before the closing </div> of the HTML body; the text lines are
@@ -206,7 +212,7 @@ export async function sendShippingEmail(data: ShippingEmailData): Promise<void> 
   const awb = esc(data.awb);
 
   const html = `
-    <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">
+    <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">${CUSTOMER_HEADER_HTML}
       <h2 style="color:#B5700A">Comanda ta e pe drum 🚚</h2>
       <p>Salut ${name},</p>
       <p>
@@ -258,7 +264,7 @@ export async function sendCancellationEmail(data: CancellationEmailData): Promis
   const orderId = esc(data.orderId);
 
   const html = `
-    <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">
+    <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">${CUSTOMER_HEADER_HTML}
       <h2 style="color:#B5700A">Comanda ta a fost anulată</h2>
       <p>Salut ${name},</p>
       <p>
@@ -311,8 +317,8 @@ export async function sendConfirmationEmail(data: ConfirmationEmailData): Promis
   const orderId = esc(data.orderId);
 
   const html = `
-    <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">
-      <h2 style="color:#B5700A">Comanda dumneavoastră a fost primită</h2>
+    <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">${CUSTOMER_HEADER_HTML}
+      <h2 style="color:#B5700A">Comanda dumneavoastră este în curs de procesare !</h2>
       <p>Bună ziua ${name},</p>
       <p>
         Am primit comanda <strong>${orderId}</strong> și este în curs de procesare.
@@ -322,7 +328,7 @@ export async function sendConfirmationEmail(data: ConfirmationEmailData): Promis
     </div>`;
 
   const text = [
-    `Comanda dumneavoastră a fost primită`,
+    `Comanda dumneavoastră este în curs de procesare !`,
     ``,
     `Bună ziua ${data.customerFirstName},`,
     `Am primit comanda ${data.orderId} și este în curs de procesare. Veți primi un email cu AWB-ul când aceasta va fi expediată.`,
@@ -423,7 +429,7 @@ export async function sendNewsletterSignup(
       subject: "Reducerea ta de 5% la Fagurul de Aur",
       text: `Bun venit la Fagurul de Aur!\n\nCodul tău de 5% la prima comandă: ${NEWSLETTER_DISCOUNT_CODE}\n\nComandă miere pură din Gorj: https://faguruldeaur.ro/miere\n\n${CUSTOMER_FOOTER_TEXT.join("\n")}`,
       html: `
-        <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">
+        <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">${CUSTOMER_HEADER_HTML}
           <h2 style="color:#B5700A">Bun venit la Fagurul de Aur 🐝</h2>
           <p>Mulțumim că te-ai abonat! Iată reducerea ta:</p>
           <p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f7f1e3;padding:14px 18px;border-radius:8px;display:inline-block">${NEWSLETTER_DISCOUNT_CODE}</p>

@@ -33,6 +33,7 @@ describe("sendShippingEmail", () => {
     expect(arg.text).toContain("Târgu Jiu");
     expect(arg.text).toContain("AWB123456");
     expect(arg.html).toContain("AWB123456");
+    expect(arg.html).toContain("email-logo.png");
     expect(arg.html).toContain("www.faguruldeaur.ro");
     expect(arg.text).toContain("www.faguruldeaur.ro");
   });
@@ -83,6 +84,7 @@ describe("sendCancellationEmail", () => {
     expect(arg.subject).toContain("SB-9");
     expect(arg.text).toContain("a fost anulată");
     expect(arg.html).toContain("a fost anulată");
+    expect(arg.html).toContain("email-logo.png");
     expect(arg.html).toContain("www.faguruldeaur.ro");
     expect(arg.text).toContain("www.faguruldeaur.ro");
   });
@@ -122,8 +124,9 @@ describe("sendConfirmationEmail", () => {
     expect(arg.to).toBe("client@example.com");
     expect(arg.replyTo).toBe("faguruldeaur@gmail.com");
     expect(arg.subject).toContain("SB-7");
-    expect(arg.text).toContain("în curs de procesare");
-    expect(arg.html).toContain("în curs de procesare");
+    expect(arg.text).toContain("Comanda dumneavoastră este în curs de procesare");
+    expect(arg.html).toContain("Comanda dumneavoastră este în curs de procesare");
+    expect(arg.html).toContain("email-logo.png");
     expect(arg.html).toContain("www.faguruldeaur.ro");
     expect(arg.text).toContain("www.faguruldeaur.ro");
   });
