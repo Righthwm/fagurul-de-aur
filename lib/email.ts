@@ -69,6 +69,19 @@ function esc(value: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// Signature footer for every customer-facing email (shipping, cancellation,
+// confirmation, newsletter welcome). Shop-facing notifications don't carry it.
+// Inserted before the closing </div> of the HTML body; the text lines are
+// spread after a blank separator line.
+const CUSTOMER_FOOTER_HTML = `
+      <hr style="border:none;border-top:1px solid #eee;margin:20px 0">
+      <p style="color:#888;font-size:13px;margin:0">
+        <strong style="color:#B5700A">Fagurul de Aur</strong><br>
+        <a href="https://faguruldeaur.ro" style="color:#B5700A">www.faguruldeaur.ro</a>
+      </p>`;
+
+const CUSTOMER_FOOTER_TEXT = ["—", "Fagurul de Aur", "www.faguruldeaur.ro"];
+
 export interface OrderEmailData {
   orderId: string;
   customer: { firstName: string; lastName: string; email: string; phone: string };
@@ -201,7 +214,7 @@ export async function sendShippingEmail(data: ShippingEmailData): Promise<void> 
         <strong>Fan Courier ${city}</strong>, cu numărul AWB <strong>${awb}</strong>.
       </p>
       <p>O poți urmări pe <a href="https://www.fancourier.ro/awb-tracking/" style="color:#B5700A">fancourier.ro</a> folosind codul AWB.</p>
-      <p style="color:#888">Mulțumim că ai ales Fagurul de Aur! 🐝</p>
+      <p style="color:#888">Mulțumim că ai ales Fagurul de Aur! 🐝</p>${CUSTOMER_FOOTER_HTML}
     </div>`;
 
   const text = [
@@ -212,6 +225,8 @@ export async function sendShippingEmail(data: ShippingEmailData): Promise<void> 
     `Urmărește pe: https://www.fancourier.ro/awb-tracking/`,
     ``,
     `Mulțumim că ai ales Fagurul de Aur!`,
+    ``,
+    ...CUSTOMER_FOOTER_TEXT,
   ].join("\n");
 
   const { error } = await getClient().emails.send({
@@ -251,7 +266,7 @@ export async function sendCancellationEmail(data: CancellationEmailData): Promis
         și a fost anulată. Te rugăm să refaci comanda.
       </p>
       <p><a href="https://faguruldeaur.ro/miere" style="color:#B5700A">Reia comanda →</a></p>
-      <p style="color:#888">Îți mulțumim pentru înțelegere! 🐝</p>
+      <p style="color:#888">Îți mulțumim pentru înțelegere! 🐝</p>${CUSTOMER_FOOTER_HTML}
     </div>`;
 
   const text = [
@@ -262,6 +277,8 @@ export async function sendCancellationEmail(data: CancellationEmailData): Promis
     `Reia comanda: https://faguruldeaur.ro/miere`,
     ``,
     `Îți mulțumim pentru înțelegere!`,
+    ``,
+    ...CUSTOMER_FOOTER_TEXT,
   ].join("\n");
 
   const { error } = await getClient().emails.send({
@@ -301,7 +318,7 @@ export async function sendConfirmationEmail(data: ConfirmationEmailData): Promis
         Am primit comanda <strong>${orderId}</strong> și este în curs de procesare.
         Veți primi un email cu AWB-ul când aceasta va fi expediată.
       </p>
-      <p style="color:#888">Vă mulțumim! 🐝</p>
+      <p style="color:#888">Vă mulțumim! 🐝</p>${CUSTOMER_FOOTER_HTML}
     </div>`;
 
   const text = [
@@ -311,6 +328,8 @@ export async function sendConfirmationEmail(data: ConfirmationEmailData): Promis
     `Am primit comanda ${data.orderId} și este în curs de procesare. Veți primi un email cu AWB-ul când aceasta va fi expediată.`,
     ``,
     `Vă mulțumim!`,
+    ``,
+    ...CUSTOMER_FOOTER_TEXT,
   ].join("\n");
 
   const { error } = await getClient().emails.send({
@@ -402,14 +421,14 @@ export async function sendNewsletterSignup(
       from: MAIL_FROM,
       to: email,
       subject: "Reducerea ta de 5% la Fagurul de Aur",
-      text: `Bun venit la Fagurul de Aur!\n\nCodul tău de 5% la prima comandă: ${NEWSLETTER_DISCOUNT_CODE}\n\nComandă miere pură din Gorj: https://faguruldeaur.ro/miere`,
+      text: `Bun venit la Fagurul de Aur!\n\nCodul tău de 5% la prima comandă: ${NEWSLETTER_DISCOUNT_CODE}\n\nComandă miere pură din Gorj: https://faguruldeaur.ro/miere\n\n${CUSTOMER_FOOTER_TEXT.join("\n")}`,
       html: `
         <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">
           <h2 style="color:#B5700A">Bun venit la Fagurul de Aur 🐝</h2>
           <p>Mulțumim că te-ai abonat! Iată reducerea ta:</p>
           <p style="font-size:22px;font-weight:bold;letter-spacing:2px;background:#f7f1e3;padding:14px 18px;border-radius:8px;display:inline-block">${NEWSLETTER_DISCOUNT_CODE}</p>
           <p>Folosește codul la prima comandă de miere artizanală, recoltată manual în Gorj.</p>
-          <p><a href="https://faguruldeaur.ro/miere" style="color:#B5700A">Descoperă mierea →</a></p>
+          <p><a href="https://faguruldeaur.ro/miere" style="color:#B5700A">Descoperă mierea →</a></p>${CUSTOMER_FOOTER_HTML}
         </div>`,
     });
     if (error) throw new Error(`${error.name} — ${error.message}`);

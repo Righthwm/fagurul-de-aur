@@ -33,6 +33,8 @@ describe("sendShippingEmail", () => {
     expect(arg.text).toContain("Târgu Jiu");
     expect(arg.text).toContain("AWB123456");
     expect(arg.html).toContain("AWB123456");
+    expect(arg.html).toContain("www.faguruldeaur.ro");
+    expect(arg.text).toContain("www.faguruldeaur.ro");
   });
 
   it("escapes HTML in customer-controlled fields", async () => {
@@ -81,6 +83,8 @@ describe("sendCancellationEmail", () => {
     expect(arg.subject).toContain("SB-9");
     expect(arg.text).toContain("a fost anulată");
     expect(arg.html).toContain("a fost anulată");
+    expect(arg.html).toContain("www.faguruldeaur.ro");
+    expect(arg.text).toContain("www.faguruldeaur.ro");
   });
 
   it("escapes HTML in the customer name", async () => {
@@ -120,6 +124,8 @@ describe("sendConfirmationEmail", () => {
     expect(arg.subject).toContain("SB-7");
     expect(arg.text).toContain("în curs de procesare");
     expect(arg.html).toContain("în curs de procesare");
+    expect(arg.html).toContain("www.faguruldeaur.ro");
+    expect(arg.text).toContain("www.faguruldeaur.ro");
   });
 
   it("escapes HTML in the customer name", async () => {
