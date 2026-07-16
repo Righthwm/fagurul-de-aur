@@ -349,12 +349,15 @@ describe("enforceBonusEntitlement — kg pool", () => {
     expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
   });
 
-  it("drops propolis claimed as a kg bonus", () => {
+  it("keeps propolis as a kg bonus, delivered as 2 tinctures", () => {
     const kept = enforceBonusEntitlement(
       [paidTenKg, kgBonus("tinctura-propolis", "20ml")],
       catalogOf
     );
-    expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+    const bonus = kept.find((l) => l.isBonus);
+    expect(bonus).toBeDefined();
+    expect(bonus?.unitPrice).toBe(0);
+    expect(bonus?.quantity).toBe(2);
   });
 
   it("keeps the earned free jar for a legit 10kg cart (positive control)", () => {
@@ -381,13 +384,17 @@ describe("enforceBonusEntitlement — kg pool", () => {
   });
 
   it("a negative-quantity bonus line can't lift the cap for a later line", () => {
-    // 10kg paid honey earns exactly 1 kg bonus. A -1000 line must not drive the
-    // running tally negative and open headroom for the following oversized line.
+    // 10kg paid honey earns exactly 1 kg bonus. The -1000 line is dropped outright
+    // (non-positive) and never touches the running tally; the following line is kept
+    // as a single claim with its quantity normalized to one jar, so a forged quantity
+    // can't over-redeem.
     const kept = enforceBonusEntitlement(
       [paidTenKg, kgBonus("miere-tei", "1kg", -1000), kgBonus("miere-tei", "1kg", 999)],
       catalogOf
     );
-    expect(kept.filter((l) => l.isBonus)).toHaveLength(0);
+    const bonuses = kept.filter((l) => l.isBonus);
+    expect(bonuses).toHaveLength(1);
+    expect(bonuses[0].quantity).toBe(1);
   });
 });
 

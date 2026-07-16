@@ -135,13 +135,14 @@ export const useCartStore = create<CartState>()(
       },
 
       // Add a free line of the chosen product (price 0). Each claim is its own
-      // line so availability ("indisponibil momentan") is tracked per line. The
-      // propolis pack bonus is a single line of 2 tinctures.
+      // line so availability ("indisponibil momentan") is tracked per line. A
+      // propolis pick — whether the per-kg or the pack bonus — is a single line
+      // of 2 tinctures; honey is one jar.
       addBonusItem: (product, source = "kg") => {
         const base =
           product.variants.find((v) => variantHoneyKg(v) === 1) ?? product.variants[0];
         const bonusVariant: ProductVariant = { ...base, price: 0 };
-        const quantity = source === "pack" ? packBonusQuantity(product) : 1;
+        const quantity = packBonusQuantity(product);
         set((state) => ({
           items: [
             ...state.items,

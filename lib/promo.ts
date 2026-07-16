@@ -49,10 +49,12 @@ export function bonusSourceOf(line: { bonusSource?: BonusSource }): BonusSource 
   return line.bonusSource ?? "kg";
 }
 
-/** Free jars from the per-kg promotion already in the cart. */
+/** Per-kg bonuses already claimed in the cart. Counted per line (one claim =
+ *  one line), not per unit — a propolis kg pick is a single claim of 2 tinctures,
+ *  and honey kg bonuses are always one jar per line. */
 export function claimedFreeJars(items: CartItem[]): number {
   return items.reduce(
-    (sum, i) => (i.isBonus && bonusSourceOf(i) === "kg" ? sum + i.quantity : sum),
+    (sum, i) => (i.isBonus && bonusSourceOf(i) === "kg" ? sum + 1 : sum),
     0
   );
 }
@@ -214,15 +216,21 @@ export function enforceBonusEntitlement<T extends CheckoutLine>(
     if (line.quantity <= 0) return []; // a non-positive claim can't move either cap
 
     if (bonusSourceOf(line) === "kg") {
-      // The per-kg promo grants a free 1kg honey jar (salcam allowed). Reject
-      // anything else claimed as a kg bonus: unknown product, non-honey (e.g.
-      // propolis), or a pack variant — the last would redeem a single-jar
-      // entitlement as a whole 10kg pack.
+      // The per-kg promo grants, per claim, either a free 1kg honey jar (salcam
+      // allowed) or the propolis tincture (2 free). Reject anything else: unknown
+      // product, other non-honey, or a pack variant — the last would redeem a
+      // single-jar entitlement as a whole 10kg pack. Counted per claim (one line),
+      // so the 2-tincture propolis pick consumes exactly one entitlement.
       const product = catalogOf(line.productId);
-      if (!product || !isHoney(product) || variantOf(line)?.bonusPack) return [];
-      if (keptKg + line.quantity > allowedKg) return []; // over-entitlement → drop
-      keptKg += line.quantity;
-      return [{ ...line, unitPrice: 0 }];
+      if (
+        !product ||
+        (!isHoney(product) && product.id !== PROPOLIS_ID) ||
+        variantOf(line)?.bonusPack
+      )
+        return [];
+      if (keptKg + 1 > allowedKg) return []; // over-entitlement → drop
+      keptKg += 1;
+      return [{ ...line, unitPrice: 0, quantity: packBonusQuantity(product) }];
     }
 
     const product = catalogOf(line.productId);

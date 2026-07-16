@@ -15,19 +15,24 @@ import {
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import type { BonusSource } from "@/types";
 
-// Per-kg promotion: any honey jar. Propolis is excluded. Ordered for the popup
-// so it opens on miere de tei and shows salcam last (shop owner's preference);
-// other honeys keep their catalog order in between (stable sort).
+// Per-kg promotion choices: any honey jar, ordered so the popup opens on miere
+// de tei and shows salcam last (shop owner's preference; other honeys keep their
+// catalog order in between via a stable sort), plus the propolis tincture (2 free)
+// as the final option.
 const KG_FIRST = "miere-tei";
 const KG_LAST = "miere-salcam";
-const honeyProducts = products
-  .filter(isHoney)
-  .slice()
-  .sort((a, b) => {
-    const rank = (id: string) => (id === KG_FIRST ? -1 : id === KG_LAST ? 1 : 0);
-    return rank(a.id) - rank(b.id);
-  });
-// Pack bonus: every honey except salcam, plus the propolis tincture.
+const propolis = products.find((p) => p.id === "tinctura-propolis")!;
+const kgChoices = [
+  ...products
+    .filter(isHoney)
+    .slice()
+    .sort((a, b) => {
+      const rank = (id: string) => (id === KG_FIRST ? -1 : id === KG_LAST ? 1 : 0);
+      return rank(a.id) - rank(b.id);
+    }),
+  propolis,
+];
+// Pack bonus: every honey except salcam and mana, plus the propolis tincture.
 const packBonusProducts = products.filter(isPackBonusEligible);
 
 /**
@@ -49,7 +54,7 @@ export function FreeJarPopup() {
   const pending = kgPending + packPending;
   // The per-kg claim comes first; the pack bonus follows in the same window.
   const mode: BonusSource = kgPending > 0 ? "kg" : "pack";
-  const choices = mode === "kg" ? honeyProducts : packBonusProducts;
+  const choices = mode === "kg" ? kgChoices : packBonusProducts;
 
   const [index, setIndex] = useState(0);
   const prevPending = useRef(0);
@@ -127,7 +132,7 @@ export function FreeJarPopup() {
                 : "Bonus pachet rapiță"}
             </h2>
             <p className="text-text-secondary text-sm mt-2 mb-6">
-              {mode === "kg" ? "Alegeți ce miere doriți" : "Alegeți bonusul — fără salcâm"}
+              {mode === "kg" ? "Alegeți mierea sau tinctura de propolis" : "Alegeți bonusul — fără salcâm"}
               {pending > 1 ? ` (${pending} de ales)` : ""}.
             </p>
 
@@ -180,8 +185,8 @@ export function FreeJarPopup() {
 
             <button onClick={claim} className="btn-primary w-full gap-2">
               <Gift size={16} />
-              {/* "2 tincturi" copy assumes propolis is the only quantity-2 pack bonus. */}
-              {mode === "pack" && packBonusQuantity(product) === 2
+              {/* "2 tincturi" copy assumes propolis is the only quantity-2 bonus. */}
+              {packBonusQuantity(product) === 2
                 ? "Adaugă 2 tincturi gratuit în coș"
                 : "Adaugă gratuit în coș"}
             </button>
