@@ -1,14 +1,15 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { markOrderShipped, cancelOrder, deleteOrder } from "./actions";
+import { markOrderShipped, confirmOrder, cancelOrder, deleteOrder } from "./actions";
 
-type Mode = "idle" | "ship" | "confirm-cancel" | "confirm-delete";
+type Mode = "idle" | "ship" | "confirm-order" | "confirm-cancel" | "confirm-delete";
 type ActionResult = { ok: true } | { ok: false; error: string };
 
-/** Per-row controls in the orders table: Expediat (with AWB form) and Anulare are
- *  shown only while the order is neither shipped nor cancelled; Șterge is always
- *  available. Each destructive action asks for inline confirmation first. */
+/** Per-row controls in the orders table: Confirmare (only while the order is new)
+ *  and Expediat (with AWB form) + Anulare (shown while the order is neither shipped
+ *  nor cancelled); Șterge is always available. Each action asks for inline
+ *  confirmation first. */
 export function OrderActionsCell({
   orderId,
   status,
@@ -28,6 +29,7 @@ export function OrderActionsCell({
 
   const shipped = status === "expediat" || !!awb;
   const cancelled = status === "anulata";
+  const isNew = status === "noua";
 
   const goto = (next: Mode) => {
     setError("");
@@ -83,6 +85,33 @@ export function OrderActionsCell({
             className="px-2 py-1 rounded-sm text-xs text-text-muted hover:text-gold-300"
           >
             Renunță
+          </button>
+        </div>
+        {error && <p className="text-error text-[11px]">{error}</p>}
+      </div>
+    );
+  }
+
+  if (mode === "confirm-order") {
+    return (
+      <div className="flex flex-col gap-1">
+        <span className="text-xs text-text-secondary">Trimit confirmarea către client?</span>
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => run(() => confirmOrder(orderId))}
+            disabled={pending}
+            className="px-2 py-1 rounded-sm text-xs font-medium bg-gold-400/20 text-gold-300 hover:bg-gold-400/30 disabled:opacity-50"
+          >
+            {pending ? "Se trimite…" : "Da, confirmă"}
+          </button>
+          <button
+            type="button"
+            onClick={() => goto("idle")}
+            disabled={pending}
+            className="px-2 py-1 rounded-sm text-xs text-text-muted hover:text-gold-300"
+          >
+            Nu
           </button>
         </div>
         {error && <p className="text-error text-[11px]">{error}</p>}
@@ -156,6 +185,15 @@ export function OrderActionsCell({
         </span>
       ) : (
         <>
+          {isNew && (
+            <button
+              type="button"
+              onClick={() => goto("confirm-order")}
+              className="px-3 py-1 rounded-sm text-xs font-medium bg-gold-400/10 text-gold-300 hover:bg-gold-400/20 transition-colors"
+            >
+              Confirmare
+            </button>
+          )}
           <button
             type="button"
             onClick={() => goto("ship")}
