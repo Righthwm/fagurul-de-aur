@@ -23,9 +23,24 @@ export async function POST(request: Request) {
     }
 
     const password = await bcrypt.hash(data.password, 10);
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: { name: data.name.trim(), email, password, role: "CLIENT" },
     });
+
+    // Adopt any guest orders placed earlier with this email so they show up in
+    // the new account. Matched case-insensitively (orders store the email as
+    // typed, while `email` here is normalized) and only over unclaimed orders.
+    // Wrapped separately: a failure here must not fail an otherwise-created account.
+    try {
+      await prisma.$executeRaw`
+        UPDATE "Order"
+        SET "userId" = ${user.id}
+        WHERE "userId" IS NULL
+          AND LOWER(TRIM("customerEmail")) = ${email}
+      `;
+    } catch (adoptError) {
+      console.error("Guest order adoption failed:", adoptError);
+    }
 
     return NextResponse.json({ success: true }, { status: 201 });
   } catch (error) {
