@@ -3,17 +3,16 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { motion } from "framer-motion";
 import {
   CreditCard,
   Banknote,
   Truck,
   ShieldCheck,
   Lock,
-  CheckCircle,
   ShoppingBasket,
   AlertCircle,
 } from "lucide-react";
@@ -21,7 +20,7 @@ import { useCartStore } from "@/lib/cart";
 import { orderableBonusKeys } from "@/lib/promo";
 import { couponDiscount, couponFreeShipping } from "@/lib/coupons";
 import { formatPrice } from "@/lib/utils";
-import { trackPurchase, trackInitiateCheckout } from "@/lib/analytics";
+import { trackInitiateCheckout } from "@/lib/analytics";
 import { HexPattern } from "@/components/ui/HexPattern";
 import { HoneyDropLoader } from "@/components/ui/HoneyDropLoader";
 import { PaymentBadges } from "@/components/ui/PaymentBadges";
@@ -84,12 +83,10 @@ function Field({
 }
 
 export default function CheckoutPage() {
-  const { items, totalPrice, clearCart } = useCartStore();
+  const { items, totalPrice } = useCartStore();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
-  const [orderId, setOrderId] = useState<string | null>(null);
-  const [orderTotal, setOrderTotal] = useState(0);
-  const [orderPayment, setOrderPayment] = useState<"card" | "ramburs">("ramburs");
   // Card payment is only available once Netopia is configured (server tells us).
   const [cardEnabled, setCardEnabled] = useState(false);
   // Discount coupon (validated again server-side on submit).
@@ -302,7 +299,8 @@ export default function CheckoutPage() {
         return;
       }
 
-      // Ramburs: persist + confirm inline.
+      // Ramburs: persist, then hand off to the shared success page (which fires
+      // the Purchase conversion and clears the cart).
       const res = await fetch("/api/checkout", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -311,59 +309,13 @@ export default function CheckoutPage() {
       if (!res.ok) throw new Error("failed");
       const json: { orderId: string; totals?: { total: number } } = await res.json();
       const finalTotal = json.totals?.total ?? total;
-      setOrderTotal(finalTotal);
-      setOrderPayment(data.paymentMethod);
-      setOrderId(json.orderId);
-      trackPurchase(json.orderId, finalTotal);
-      clearCart();
-      setStatus("idle");
-      window.scrollTo({ top: 0 });
+      router.push(
+        `/checkout-success?order=${encodeURIComponent(json.orderId)}&total=${finalTotal}&payment=ramburs`
+      );
     } catch {
       setStatus("error");
     }
   };
-
-  /* ---- Success screen ---- */
-  if (orderId) {
-    return (
-      <div className="bg-bg-primary pt-20 min-h-screen">
-        <div className="max-w-xl mx-auto px-4 py-24 text-center">
-          <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className="card p-10">
-            <CheckCircle size={56} className="text-success mx-auto mb-5" />
-            <h1 className="font-heading text-3xl text-text-primary mb-3" style={{ fontSize: "2rem" }}>
-              Comanda a fost plasată!
-            </h1>
-            <p className="text-text-secondary mb-6">
-              Mulțumim! Vei primi un email de confirmare în câteva minute.
-            </p>
-            <div className="bg-bg-elevated border border-gold-400/15 rounded-sm p-5 text-left space-y-2 mb-8">
-              <div className="flex justify-between text-sm">
-                <span className="text-text-muted">Număr comandă</span>
-                <span className="text-gold-300 font-semibold font-body">{orderId}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-muted">Total</span>
-                <span className="text-text-primary font-semibold">{formatPrice(orderTotal)}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-muted">Plată</span>
-                <span className="text-text-primary">
-                  {orderPayment === "card" ? "Card bancar (plătită)" : "Ramburs la livrare"}
-                </span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-text-muted">Livrare estimată</span>
-                <span className="text-text-primary">24–48h lucrătoare</span>
-              </div>
-            </div>
-            <Link href="/miere" className="btn-primary">
-              Înapoi la magazin
-            </Link>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
 
   /* ---- Empty cart ---- */
   if (mounted && items.length === 0) {

@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { CheckCircle, AlertCircle, Clock } from "lucide-react";
-import { useCartStore } from "@/lib/cart";
-import { formatPrice } from "@/lib/utils";
-import { trackPurchase } from "@/lib/analytics";
+import { AlertCircle, Clock } from "lucide-react";
 
-type View = "checking" | "paid" | "failed" | "pending" | "missing";
+type View = "checking" | "failed" | "pending" | "missing";
 
 const POLL_INTERVAL_MS = 2000;
 const MAX_ATTEMPTS = 30; // ~60s — the IPN normally lands within a few seconds.
@@ -16,13 +14,13 @@ const MAX_ATTEMPTS = 30; // ~60s — the IPN normally lands within a few seconds
  * Polls the order status after a card payment. The Netopia IPN confirms the
  * order server-to-server, which can land a moment AFTER the browser returns —
  * so we keep checking rather than declaring failure on the first pending read.
- * Only an explicit "failed" status shows the retry screen.
+ * On "paid" we redirect to /checkout-success (the shared post-purchase page,
+ * which fires the Purchase conversion and clears the cart); only an explicit
+ * "failed" status shows the retry screen.
  */
 export function PaymentReturnStatus({ orderId }: { orderId: string | null }) {
+  const router = useRouter();
   const [view, setView] = useState<View>(orderId ? "checking" : "missing");
-  const [total, setTotal] = useState<number | null>(null);
-  const clearCart = useCartStore((s) => s.clearCart);
-  const cleared = useRef(false);
 
   useEffect(() => {
     if (!orderId) return;
@@ -37,9 +35,14 @@ export function PaymentReturnStatus({ orderId }: { orderId: string | null }) {
         });
         const data = (await res.json()) as { status?: string; total?: number };
         if (!active) return;
-        if (typeof data.total === "number") setTotal(data.total);
 
-        if (data.status === "paid") return setView("paid");
+        if (data.status === "paid") {
+          const total = typeof data.total === "number" ? data.total : "";
+          router.replace(
+            `/checkout-success?order=${encodeURIComponent(orderId!)}&total=${total}&payment=card`
+          );
+          return;
+        }
         if (data.status === "failed") return setView("failed");
         // pending / missing / n/a → keep polling until we run out of attempts.
         if (attempts >= MAX_ATTEMPTS) {
@@ -56,40 +59,7 @@ export function PaymentReturnStatus({ orderId }: { orderId: string | null }) {
     return () => {
       active = false;
     };
-  }, [orderId]);
-
-  useEffect(() => {
-    if (view === "paid" && !cleared.current) {
-      cleared.current = true;
-      clearCart();
-    }
-  }, [view, clearCart]);
-
-  // Fire the Purchase conversion once the card payment is confirmed and we know
-  // the order total. trackPurchase de-duplicates, so re-renders/refreshes are safe.
-  useEffect(() => {
-    if (view === "paid" && orderId && total != null) {
-      trackPurchase(orderId, total);
-    }
-  }, [view, orderId, total]);
-
-  if (view === "paid") {
-    return (
-      <>
-        <CheckCircle size={56} className="text-success mx-auto mb-5" />
-        <h1 className="font-heading text-3xl text-text-primary mb-3" style={{ fontSize: "2rem" }}>
-          Plată reușită!
-        </h1>
-        <p className="text-text-secondary mb-6">
-          Mulțumim! Comanda <strong className="text-gold-300">{orderId}</strong> a fost plătită
-          {total != null ? ` (${formatPrice(total)})` : ""}. Vei primi un email de confirmare.
-        </p>
-        <Link href="/miere" className="btn-primary">
-          Înapoi la magazin
-        </Link>
-      </>
-    );
-  }
+  }, [orderId, router]);
 
   if (view === "failed") {
     return (
