@@ -4,7 +4,7 @@ import { z } from "zod";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
-import { sendShippingEmail, sendCancellationEmail } from "@/lib/email";
+import { sendShippingEmail, sendCancellationEmail, sendConfirmationEmail } from "@/lib/email";
 
 const shipInput = z.object({
   courierCity: z.string().trim().min(2),
@@ -91,6 +91,47 @@ export async function cancelOrder(
   await prisma.order.update({
     where: { orderNumber: orderId },
     data: { status: "anulata" },
+  });
+  revalidatePath("/admin/comenzi");
+  return { ok: true };
+}
+
+/**
+ * Confirm an order: email the customer that it was received and is being
+ * processed, then (only if the email succeeded) set the status to "in_procesare".
+ * ADMIN-only. Accepts only brand-new orders; anything already confirmed, shipped
+ * or cancelled is refused.
+ */
+export async function confirmOrder(
+  orderId: string
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await auth();
+  if (session?.user?.role !== "ADMIN") {
+    throw new Error("Unauthorized");
+  }
+
+  const order = await prisma.order.findUnique({ where: { orderNumber: orderId } });
+  if (!order) {
+    return { ok: false, error: "Comanda nu a fost găsită." };
+  }
+  if (order.status !== "noua") {
+    return { ok: false, error: "Comanda nu mai poate fi confirmată." };
+  }
+
+  // All-or-nothing: send the email first; if it fails, leave the order untouched.
+  try {
+    await sendConfirmationEmail({
+      orderId: order.orderNumber,
+      customerEmail: order.customerEmail,
+      customerFirstName: order.customerFirstName,
+    });
+  } catch {
+    return { ok: false, error: "Emailul nu a putut fi trimis. Încearcă din nou." };
+  }
+
+  await prisma.order.update({
+    where: { orderNumber: orderId },
+    data: { status: "in_procesare" },
   });
   revalidatePath("/admin/comenzi");
   return { ok: true };

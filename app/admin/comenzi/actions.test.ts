@@ -7,6 +7,7 @@ const {
   deleteMock,
   sendShippingEmailMock,
   sendCancellationEmailMock,
+  sendConfirmationEmailMock,
   revalidateMock,
 } = vi.hoisted(() => ({
   authMock: vi.fn(),
@@ -15,6 +16,7 @@ const {
   deleteMock: vi.fn(),
   sendShippingEmailMock: vi.fn(),
   sendCancellationEmailMock: vi.fn(),
+  sendConfirmationEmailMock: vi.fn(),
   revalidateMock: vi.fn(),
 }));
 vi.mock("@/auth", () => ({ auth: authMock }));
@@ -24,10 +26,11 @@ vi.mock("@/lib/prisma", () => ({
 vi.mock("@/lib/email", () => ({
   sendShippingEmail: sendShippingEmailMock,
   sendCancellationEmail: sendCancellationEmailMock,
+  sendConfirmationEmail: sendConfirmationEmailMock,
 }));
 vi.mock("next/cache", () => ({ revalidatePath: revalidateMock }));
 
-import { markOrderShipped, cancelOrder, deleteOrder } from "@/app/admin/comenzi/actions";
+import { markOrderShipped, confirmOrder, cancelOrder, deleteOrder } from "@/app/admin/comenzi/actions";
 
 const order = { orderNumber: "SB-1", customerEmail: "c@x.ro", customerFirstName: "Ana" };
 
@@ -162,5 +165,66 @@ describe("deleteOrder", () => {
     deleteMock.mockRejectedValue(new Error("P2025"));
     const res = await deleteOrder("SB-1");
     expect(res).toEqual({ ok: false, error: expect.any(String) });
+  });
+});
+
+describe("confirmOrder", () => {
+  const confirmable = {
+    orderNumber: "SB-1",
+    customerEmail: "c@x.ro",
+    customerFirstName: "Ana",
+    status: "noua",
+  };
+
+  beforeEach(() => {
+    authMock.mockReset();
+    findUniqueMock.mockReset();
+    updateMock.mockReset();
+    sendConfirmationEmailMock.mockReset();
+    revalidateMock.mockReset();
+    authMock.mockResolvedValue({ user: { role: "ADMIN" } });
+    findUniqueMock.mockResolvedValue(confirmable);
+    sendConfirmationEmailMock.mockResolvedValue(undefined);
+    updateMock.mockResolvedValue({});
+  });
+
+  it("rejects non-admins", async () => {
+    authMock.mockResolvedValue({ user: { role: "CLIENT" } });
+    await expect(confirmOrder("SB-1")).rejects.toThrow(/unauthorized/i);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("refuses an order that is not new", async () => {
+    findUniqueMock.mockResolvedValue({ ...confirmable, status: "in_procesare" });
+    const res = await confirmOrder("SB-1");
+    expect(res.ok).toBe(false);
+    expect(sendConfirmationEmailMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("returns an error when the order is missing", async () => {
+    findUniqueMock.mockResolvedValue(null);
+    const res = await confirmOrder("SB-1");
+    expect(res.ok).toBe(false);
+    expect(sendConfirmationEmailMock).not.toHaveBeenCalled();
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("does NOT update when the email fails (all-or-nothing)", async () => {
+    sendConfirmationEmailMock.mockRejectedValue(new Error("smtp down"));
+    const res = await confirmOrder("SB-1");
+    expect(res.ok).toBe(false);
+    expect(updateMock).not.toHaveBeenCalled();
+  });
+
+  it("emails then sets status in_procesare on success", async () => {
+    const res = await confirmOrder("SB-1");
+    expect(res).toEqual({ ok: true });
+    expect(sendConfirmationEmailMock).toHaveBeenCalledOnce();
+    expect(updateMock).toHaveBeenCalledWith({
+      where: { orderNumber: "SB-1" },
+      data: { status: "in_procesare" },
+    });
+    expect(revalidateMock).toHaveBeenCalledWith("/admin/comenzi");
   });
 });
