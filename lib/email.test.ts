@@ -9,7 +9,7 @@ vi.mock("resend", () => ({
   }),
 }));
 
-import { sendShippingEmail, sendCancellationEmail } from "@/lib/email";
+import { sendShippingEmail, sendCancellationEmail, sendConfirmationEmail } from "@/lib/email";
 
 describe("sendShippingEmail", () => {
   beforeEach(() => {
@@ -97,6 +97,45 @@ describe("sendCancellationEmail", () => {
     sendMock.mockResolvedValue({ error: { name: "bad", message: "nope" } });
     await expect(
       sendCancellationEmail({ orderId: "SB-11", customerEmail: "x@y.z", customerFirstName: "A" })
+    ).rejects.toThrow(/nope/);
+  });
+});
+
+describe("sendConfirmationEmail", () => {
+  beforeEach(() => {
+    sendMock.mockReset();
+    sendMock.mockResolvedValue({ error: null });
+  });
+
+  it("sends to the customer, replying to the shop inbox, with the processing message", async () => {
+    await sendConfirmationEmail({
+      orderId: "SB-7",
+      customerEmail: "client@example.com",
+      customerFirstName: "Ana",
+    });
+    expect(sendMock).toHaveBeenCalledOnce();
+    const arg = sendMock.mock.calls[0][0];
+    expect(arg.to).toBe("client@example.com");
+    expect(arg.replyTo).toBe("faguruldeaur@gmail.com");
+    expect(arg.subject).toContain("SB-7");
+    expect(arg.text).toContain("în curs de procesare");
+    expect(arg.html).toContain("în curs de procesare");
+  });
+
+  it("escapes HTML in the customer name", async () => {
+    await sendConfirmationEmail({
+      orderId: "SB-8",
+      customerEmail: "x@y.z",
+      customerFirstName: "<b>x</b>",
+    });
+    const arg = sendMock.mock.calls[0][0];
+    expect(arg.html).toContain("&lt;b&gt;x&lt;/b&gt;");
+  });
+
+  it("throws when Resend returns an error", async () => {
+    sendMock.mockResolvedValue({ error: { name: "bad", message: "nope" } });
+    await expect(
+      sendConfirmationEmail({ orderId: "SB-9", customerEmail: "x@y.z", customerFirstName: "A" })
     ).rejects.toThrow(/nope/);
   });
 });

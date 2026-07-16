@@ -277,6 +277,55 @@ export async function sendCancellationEmail(data: CancellationEmailData): Promis
   }
 }
 
+export interface ConfirmationEmailData {
+  orderId: string;
+  customerEmail: string;
+  customerFirstName: string;
+}
+
+/**
+ * Tells the CUSTOMER their order was received and is being processed. Like
+ * sendCancellationEmail, it goes to the customer from the shop sender (MAIL_FROM)
+ * with replies routed to the shop inbox. Throws on failure so the caller can
+ * abort before persisting.
+ */
+export async function sendConfirmationEmail(data: ConfirmationEmailData): Promise<void> {
+  const name = esc(data.customerFirstName);
+  const orderId = esc(data.orderId);
+
+  const html = `
+    <div style="font-family:Arial,sans-serif;color:#222;max-width:560px">
+      <h2 style="color:#B5700A">Comanda dumneavoastră a fost primită</h2>
+      <p>Bună ziua ${name},</p>
+      <p>
+        Am primit comanda <strong>${orderId}</strong> și este în curs de procesare.
+        Veți primi un email cu AWB-ul când aceasta va fi expediată.
+      </p>
+      <p style="color:#888">Vă mulțumim! 🐝</p>
+    </div>`;
+
+  const text = [
+    `Comanda dumneavoastră a fost primită`,
+    ``,
+    `Bună ziua ${data.customerFirstName},`,
+    `Am primit comanda ${data.orderId} și este în curs de procesare. Veți primi un email cu AWB-ul când aceasta va fi expediată.`,
+    ``,
+    `Vă mulțumim!`,
+  ].join("\n");
+
+  const { error } = await getClient().emails.send({
+    from: MAIL_FROM,
+    to: data.customerEmail,
+    replyTo: SHOP_REPLY_TO, // customer replies reach the business inbox
+    subject: `Comanda ${data.orderId} a fost primită`,
+    html,
+    text,
+  });
+  if (error) {
+    throw new Error(`Resend error: ${error.name} — ${error.message}`);
+  }
+}
+
 export interface ContactEmailData {
   name: string;
   email: string;
