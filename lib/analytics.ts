@@ -34,18 +34,25 @@ function markFired(orderId: string): void {
 /**
  * Report a completed purchase to Meta Pixel + GA4. Safe to call more than once
  * for the same order; only the first call fires. `value` is the order total in
- * whole RON.
+ * RON. A non-positive or non-finite value is never sent: Meta counts a Purchase
+ * with a missing/zero price as an invalid conversion, which drags down the
+ * "valid value + currency" quality score in Events Manager.
  */
 export function trackPurchase(orderId: string, value: number): void {
   if (typeof window === "undefined") return;
+  if (!Number.isFinite(value) || value <= 0) return;
   if (firedIds().includes(orderId)) return;
   markFired(orderId);
 
+  // Round to 2 decimals so the value is always a clean numeric amount, and pass
+  // it as a Number (not a string) — Meta validates both the type and the format.
+  const amount = Math.round(value * 100) / 100;
+
   // eventID lets Meta de-duplicate against a future server-side (CAPI) event.
-  window.fbq?.("track", "Purchase", { value, currency: "RON" }, { eventID: orderId });
+  window.fbq?.("track", "Purchase", { value: amount, currency: "RON" }, { eventID: orderId });
   window.gtag?.("event", "purchase", {
     transaction_id: orderId,
-    value,
+    value: amount,
     currency: "RON",
   });
 }
