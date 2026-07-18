@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { verifyIpn } from "@/lib/netopia";
 import { sendOrderEmail, type OrderItem } from "@/lib/email";
+import { sendCapiPurchase } from "@/lib/meta-capi";
 
 /**
  * Netopia IPN (server-to-server). The order is marked paid/failed ONLY here,
@@ -68,6 +69,23 @@ export async function POST(request: Request) {
       } catch (mailError) {
         console.error("Failed to send paid-order email:", mailError);
       }
+
+      // Server-side Purchase to Meta, fired once on the paid transition and
+      // deduped with the browser Pixel via orderId. This is Netopia's IPN
+      // request, so there's no customer IP/UA/_fbp — email/phone/name/address
+      // hashing carries the match instead.
+      await sendCapiPurchase({
+        orderId: order.orderNumber,
+        value: order.total,
+        email: order.customerEmail,
+        phone: order.customerPhone,
+        firstName: order.customerFirstName,
+        lastName: order.customerLastName,
+        city: order.shippingCity,
+        county: order.shippingCounty,
+        postalCode: order.shippingPostalCode,
+        sourceUrl: "https://faguruldeaur.ro/checkout-success",
+      });
     } else if (ipn.status === "failed" && order.paymentStatus === "pending") {
       await prisma.order.update({
         where: { orderNumber: ipn.orderId },

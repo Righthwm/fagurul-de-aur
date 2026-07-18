@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { sendOrderEmail } from "@/lib/email";
 import { checkoutInputSchema, persistOrder } from "@/lib/orders";
+import { sendCapiPurchase, requestClientData } from "@/lib/meta-capi";
 
 /** Ramburs orders: persist immediately and notify the shop. Card payments go
  *  through /api/payment/initiate instead. */
@@ -25,6 +26,22 @@ export async function POST(request: Request) {
     } catch (mailError) {
       console.error("Failed to send order notification email:", mailError);
     }
+
+    // Server-side Purchase to Meta (deduped with the browser Pixel via orderId).
+    // The customer's own request carries their IP/UA/_fbp for better matching.
+    await sendCapiPurchase({
+      orderId,
+      value: totals.total,
+      email: input.customer.email,
+      phone: input.customer.phone,
+      firstName: input.customer.firstName,
+      lastName: input.customer.lastName,
+      city: input.shippingAddress.city,
+      county: input.shippingAddress.county,
+      postalCode: input.shippingAddress.postalCode,
+      sourceUrl: "https://faguruldeaur.ro/checkout-success",
+      ...requestClientData(request),
+    });
 
     return NextResponse.json({ success: true, orderId, totals }, { status: 201 });
   } catch (error) {
