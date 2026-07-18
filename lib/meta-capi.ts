@@ -13,7 +13,10 @@ import crypto from "crypto";
  */
 const PIXEL_ID = "1664397665686973"; // same pixel as components/analytics/MetaPixel.tsx
 const CAPI_TOKEN = process.env.META_CAPI_TOKEN ?? "";
-const TEST_CODE = process.env.META_CAPI_TEST_CODE || undefined;
+// TEMPORARY: routes CAPI events to Events Manager → Test Events for verification.
+// Revert to `process.env.META_CAPI_TEST_CODE || undefined` once confirmed, or
+// real purchases will be treated as test events and won't count as conversions.
+const TEST_CODE = process.env.META_CAPI_TEST_CODE || "TEST4054";
 const API_VERSION = "v21.0";
 
 function sha256(value: string): string {
