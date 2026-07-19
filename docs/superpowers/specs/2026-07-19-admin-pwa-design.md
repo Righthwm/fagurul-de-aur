@@ -94,7 +94,8 @@ model PushSubscription {
 ```
 
 `User` primește relația inversă `pushSubscriptions PushSubscription[]`.
-Migrare cu `prisma migrate` (SQLite).
+Migrare cu `prisma migrate` (PostgreSQL/Neon; buildul rulează deja
+`prisma migrate deploy`).
 
 ### 2.3 Abonare (client → server)
 
@@ -137,9 +138,10 @@ Cerința: sunet ca la Shopify. Realitatea platformei:
   native pot). Notificarea vine cu vibrație + sunetul sistemului.
 - **Aplicație deschisă (în prim-plan)**: redăm noi sunetul. Service workerul
   trimite un mesaj (`postMessage`) către fereastra deschisă, iar o componentă
-  client din layoutul admin redă `public/sounds/cha-ching.mp3` (sunet de casă
-  de marcat **liber de drepturi** — sunetul original Shopify e protejat de
-  drepturi de autor și nu îl folosim).
+  client din layoutul admin redă un „cha-ching" de casă de marcat **sintetizat
+  cu Web Audio** (două lovituri scurte de clopoțel) — fără fișier audio și
+  fără probleme de drepturi (sunetul original Shopify e protejat de drepturi
+  de autor și nu îl folosim).
 
 Specul acceptă explicit acest compromis: sunet custom doar în prim-plan,
 sunet de sistem în fundal.
