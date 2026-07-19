@@ -9,7 +9,8 @@ export const authConfig = {
   // Trust the deployment host (custom domain on Vercel) for callback URLs.
   trustHost: true,
   pages: { signIn: "/login" },
-  session: { strategy: "jwt" },
+  // 30 days so the admin PWA on a phone doesn't ask for login often.
+  session: { strategy: "jwt", maxAge: 60 * 60 * 24 * 30 },
   providers: [],
   callbacks: {
     jwt({ token, user }) {
