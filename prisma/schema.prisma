@@ -25,6 +25,7 @@ model User {
   createdAt DateTime    @default(now())
   orders    Order[]
   visits    PageVisit[]
+  pushSubscriptions PushSubscription[]
 }
 
 model PageVisit {
@@ -39,6 +40,16 @@ model PageVisit {
   createdAt  DateTime @default(now())
 
   @@index([createdAt])
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  endpoint  String   @unique
+  p256dh    String
+  auth      String
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
 }
 
 model Order {
