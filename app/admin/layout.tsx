@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+import { AdminPwa } from "@/components/admin/AdminPwa";
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
@@ -16,6 +17,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-20">
+      <AdminPwa />
       <div className="flex flex-col md:flex-row gap-8">
         <aside className="md:w-48 shrink-0">
           <span className="font-heading text-xl text-gold-300 block mb-4">Panou admin</span>
