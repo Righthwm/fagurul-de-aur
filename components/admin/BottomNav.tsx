@@ -16,6 +16,7 @@ export function BottomNav() {
   const pathname = usePathname();
   return (
     <nav
+      aria-label="Navigare admin"
       className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-bg-surface/95 backdrop-blur border-t border-gold-400/15 flex"
       style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
     >
@@ -25,6 +26,7 @@ export function BottomNav() {
           <Link
             key={t.href}
             href={t.href}
+            aria-current={active ? "page" : undefined}
             className={`flex-1 flex flex-col items-center gap-1 py-2.5 text-[11px] min-h-[44px] transition-colors ${
               active ? "text-gold-300" : "text-text-muted hover:text-gold-300"
             }`}
