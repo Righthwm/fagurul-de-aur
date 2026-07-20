@@ -3,6 +3,7 @@ import { z } from "zod";
 import { sendOrderEmail } from "@/lib/email";
 import { checkoutInputSchema, persistOrder } from "@/lib/orders";
 import { sendCapiPurchase, requestClientData } from "@/lib/meta-capi";
+import { sendNewOrderPush } from "@/lib/push";
 
 /** Ramburs orders: persist immediately and notify the shop. Card payments go
  *  through /api/payment/initiate instead. */
@@ -42,6 +43,9 @@ export async function POST(request: Request) {
       sourceUrl: "https://faguruldeaur.ro/checkout-success",
       ...requestClientData(request),
     });
+
+    // Push notification to admin phones (best-effort, like the CAPI call).
+    await sendNewOrderPush({ orderId, total: totals.total });
 
     return NextResponse.json({ success: true, orderId, totals }, { status: 201 });
   } catch (error) {

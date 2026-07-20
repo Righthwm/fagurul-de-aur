@@ -3,6 +3,7 @@ import { prisma } from "@/lib/prisma";
 import { verifyIpn } from "@/lib/netopia";
 import { sendOrderEmail, type OrderItem } from "@/lib/email";
 import { sendCapiPurchase } from "@/lib/meta-capi";
+import { sendNewOrderPush } from "@/lib/push";
 
 /**
  * Netopia IPN (server-to-server). The order is marked paid/failed ONLY here,
@@ -86,6 +87,9 @@ export async function POST(request: Request) {
         postalCode: order.shippingPostalCode,
         sourceUrl: "https://faguruldeaur.ro/checkout-success",
       });
+
+      // Push notification to admin phones, once, on the paid transition.
+      await sendNewOrderPush({ orderId: order.orderNumber, total: order.total });
     } else if (ipn.status === "failed" && order.paymentStatus === "pending") {
       await prisma.order.update({
         where: { orderNumber: ipn.orderId },
