@@ -14,16 +14,18 @@ export default async function AdminTrafficPage() {
 
   const cards = [
     { label: "Vizite azi", value: stats.today },
-    { label: "Ultima săptămână", value: stats.week },
-    { label: "Luna curentă", value: stats.month },
-    { label: "IP-uri unice", value: stats.uniqueIps },
+    { label: "IP unice azi", value: stats.uniqueToday },
+    { label: "Vizite săptămână", value: stats.week },
+    { label: "IP unice săptămână", value: stats.uniqueWeek },
+    { label: "Vizite lună", value: stats.month },
+    { label: "IP unice lună", value: stats.uniqueMonth },
   ];
 
   return (
     <div className="space-y-8">
       <h1 className="font-heading text-2xl text-text-primary">Trafic</h1>
 
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
         {cards.map((c) => (
           <Card key={c.label}>
             <p className="text-text-muted text-sm">{c.label}</p>
@@ -33,7 +35,14 @@ export default async function AdminTrafficPage() {
       </div>
 
       <Card>
-        <h2 className="font-heading text-lg text-text-primary mb-4">Vizite — ultimele 30 de zile</h2>
+        <div className="flex items-baseline justify-between gap-4 mb-4 flex-wrap">
+          <h2 className="font-heading text-lg text-text-primary">
+            Vizite și IP-uri unice — ultimele 30 de zile
+          </h2>
+          <p className="text-text-muted text-sm">
+            Total IP-uri unice: <span className="text-gold-300">{stats.uniqueIps}</span>
+          </p>
+        </div>
         <TrafficChart data={stats.daily} />
       </Card>
 
