@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Star, Minus, Plus, ShoppingBasket, CreditCard, MapPin, Leaf, Truck, Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { BonusPackOffer } from "@/components/shop/BonusPackOffer";
+import { VolumeOfferNote } from "@/components/shop/VolumeOfferNote";
 import { Badge } from "@/components/ui/Badge";
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import { useCartStore } from "@/lib/cart";
@@ -207,6 +208,9 @@ export function ProductDetail({ product }: { product: Product }) {
               </p>
             )}
           </div>
+
+          {/* Volume offer, right by the price where the decision is made. */}
+          {product.category === "miere" && <VolumeOfferNote className="mb-6" />}
 
           {/* Quantity + Add to cart */}
           <div className="flex gap-3 mb-3">

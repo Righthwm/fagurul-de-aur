@@ -6,6 +6,7 @@ import { ShoppingBasket, Star } from "lucide-react";
 import { getFeaturedProducts } from "@/lib/products";
 import { useCartStore } from "@/lib/cart";
 import { Badge } from "@/components/ui/Badge";
+import { VolumeOfferNote } from "@/components/shop/VolumeOfferNote";
 import { ProductVisual } from "@/components/ui/ProductVisual";
 import { formatPrice } from "@/lib/utils";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
@@ -110,6 +111,9 @@ export function FeaturedProducts() {
           <p className="section-subheading">
             Selecția noastră de produse artizanale, recoltate manual, cu grijă pentru fiecare detaliu.
           </p>
+          <div className="mt-6 flex justify-center">
+            <VolumeOfferNote />
+          </div>
         </motion.div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8">
