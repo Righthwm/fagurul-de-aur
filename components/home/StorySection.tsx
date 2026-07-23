@@ -5,9 +5,9 @@ import { motion } from "framer-motion";
 import { useScrollAnimation, useCountUp } from "@/hooks/useScrollAnimation";
 
 const stats = [
-  { value: 15, suffix: "+", label: "ani de apicultură" },
-  { value: 200, suffix: "+", label: "familii de albine" },
-  { value: 8, suffix: "", label: "soiuri de miere" },
+  { value: 25, suffix: "+", label: "ani de apicultură" },
+  { value: 120, suffix: "+", label: "familii de albine" },
+  { value: 6, suffix: "", label: "soiuri de miere" },
 ];
 
 function StatItem({ value, suffix, label }: { value: number; suffix: string; label: string }) {

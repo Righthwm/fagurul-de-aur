@@ -39,7 +39,11 @@ export function useScrollAnimation<T extends Element = HTMLDivElement>(
 }
 
 export function useCountUp(target: number, isVisible: boolean, duration = 2000) {
-  const [count, setCount] = useState(0);
+  // Seed with the real target so the server-rendered HTML (and any no-JS or
+  // observer-never-fires case) shows the true number instead of a bare 0. The
+  // count-up is a progressive enhancement: it only runs once the element
+  // scrolls into view on the client.
+  const [count, setCount] = useState(target);
 
   useEffect(() => {
     if (!isVisible) return;
