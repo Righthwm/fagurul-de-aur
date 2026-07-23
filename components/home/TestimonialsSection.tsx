@@ -7,27 +7,29 @@ import { Star, ChevronLeft, ChevronRight } from "lucide-react";
 import { useScrollAnimation } from "@/hooks/useScrollAnimation";
 import type { Testimonial } from "@/types";
 
+// Real reviews from the Fagurul de Aur Facebook page. Diacritics lightly
+// corrected; wording otherwise unchanged. The "city" line credits the source.
 const testimonials: Testimonial[] = [
   {
-    id: "t1",
-    author: "Andreea M.",
-    city: "Timișoara",
+    id: "fb-alisa-bara",
+    author: "Alisa Bara",
+    city: "Recenzie Facebook",
     rating: 5,
-    text: "Am luat mierea de salcâm pentru fiul meu de 3 ani, care refuza orice. Acum cere singur o linguriță dimineața. Are un gust fin, de floare, iar borcanul nu rezistă la noi nici două săptămâni.",
+    text: "Calitate excelentă! Mierea are un gust deosebit și o consistență perfectă. Felicitări producătorului! 🐻❤️",
   },
   {
-    id: "t2",
-    author: "Cătălin R.",
-    city: "Sibiu",
+    id: "fb-velica-flavius",
+    author: "Velică Flavius Iulian",
+    city: "Recenzie Facebook",
     rating: 5,
-    text: "Comand mierea de munte de un an. Diferența o simți la prima lingură: gust de rășină și flori de câmp, nu dulceag artificial. Livrarea a venit în 36 de ore, bine ambalată.",
+    text: "Am comandat de câteva ori de la Fagurul de Aur și pot spune că mierea chiar mi-a lăsat o impresie foarte bună. Are gust autentic, se simte că este naturală, iar livrarea a fost rapidă și produsele au ajuns foarte bine ambalate.",
   },
   {
-    id: "t3",
-    author: "Ioana D.",
-    city: "Craiova",
+    id: "fb-gabriel-moldovan",
+    author: "Gabriel Moldovan",
+    city: "Recenzie Facebook",
     rating: 5,
-    text: "Tinctura de propolis a devenit obligatorie în casă la primul semn de durere în gât. Anul ăsta n-am mai ajuns la antibiotice. Se simte concentrația reală, nu apă colorată.",
+    text: "Mierea este foarte bună și livrarea a venit a doua zi. Recomand!",
   },
 ];
 
