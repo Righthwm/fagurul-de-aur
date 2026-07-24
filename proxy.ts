@@ -1,6 +1,7 @@
 import NextAuth from "next-auth";
 import { NextResponse } from "next/server";
 import { authConfig } from "./auth.config";
+import { isBotUserAgent } from "./lib/bot-filter";
 
 // Edge-safe auth instance (no Credentials/Prisma) — reads the JWT session only.
 const { auth } = NextAuth(authConfig);
@@ -31,8 +32,17 @@ export default auth((req) => {
 
   // --- Traffic logging ---
   // Prisma can't run on the edge, so fire a non-blocking request to a Node route.
-  // Skip API calls (incl. our own /api/track) to avoid noise and recursion.
-  if (!path.startsWith("/api")) {
+  // Only count real human page loads: skip API calls (incl. our own /api/track),
+  // bots/crawlers/scrapers (they never run the client analytics either, so
+  // counting them makes the admin numbers diverge wildly from GA), and Next.js
+  // link prefetches (a hover is not a visit and would bloat the visit log).
+  const userAgent = req.headers.get("user-agent");
+  const isPrefetch =
+    req.headers.get("next-router-prefetch") === "1" ||
+    req.headers.get("purpose") === "prefetch" ||
+    (req.headers.get("sec-purpose")?.includes("prefetch") ?? false);
+
+  if (!path.startsWith("/api") && !isPrefetch && !isBotUserAgent(userAgent)) {
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       req.headers.get("x-real-ip") ??
@@ -48,7 +58,7 @@ export default auth((req) => {
         path,
         method: req.method,
         ip,
-        userAgent: req.headers.get("user-agent") ?? null,
+        userAgent: userAgent ?? null,
         userId: session?.user?.id ?? null,
       }),
     }).catch(() => {});
