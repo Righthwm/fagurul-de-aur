@@ -32,17 +32,18 @@ export default auth((req) => {
 
   // --- Traffic logging ---
   // Prisma can't run on the edge, so fire a non-blocking request to a Node route.
-  // Only count real human page loads: skip API calls (incl. our own /api/track),
-  // bots/crawlers/scrapers (they never run the client analytics either, so
-  // counting them makes the admin numbers diverge wildly from GA), and Next.js
-  // link prefetches (a hover is not a visit and would bloat the visit log).
+  // Only count real visitor page loads: skip API calls (incl. our own
+  // /api/track), bots/crawlers/scrapers (they never run the client analytics
+  // either, so counting them makes the admin numbers diverge wildly from GA),
+  // Next.js link prefetches (a hover is not a visit and would bloat the log),
+  // and the shop owner's own admin traffic (role ADMIN) wherever they browse.
   const userAgent = req.headers.get("user-agent");
   const isPrefetch =
     req.headers.get("next-router-prefetch") === "1" ||
     req.headers.get("purpose") === "prefetch" ||
     (req.headers.get("sec-purpose")?.includes("prefetch") ?? false);
 
-  if (!path.startsWith("/api") && !isPrefetch && !isBotUserAgent(userAgent)) {
+  if (!path.startsWith("/api") && !isPrefetch && !isBotUserAgent(userAgent) && role !== "ADMIN") {
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       req.headers.get("x-real-ip") ??
